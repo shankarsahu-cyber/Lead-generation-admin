@@ -32,27 +32,52 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    // Refresh token on 401 (Unauthorized) or 403 (Forbidden)
+    if (
+      error.response &&
+      (error.response.status === 401 || error.response.status === 403) &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true;
       try {
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          // Call refresh API
-          const refreshResponse = await axios.post('http://13.234.225.69:8888/api/auth/refresh', {
+          const refreshUrl = 'http://13.234.225.69:8888/api/auth/refresh';
+          // Debug log
+          console.log('Attempting token refresh with refreshToken:', user.refreshToken);
+          const refreshResponse = await axios.post(refreshUrl, {
             refreshToken: user.refreshToken,
           });
-          if (refreshResponse.data && refreshResponse.data.token) {
+          // The token is inside refreshResponse.data.data.token
+          if (refreshResponse.data && refreshResponse.data.data && refreshResponse.data.data.token) {
             // Update token in localStorage
-            user.token = refreshResponse.data.token;
+            user.token = refreshResponse.data.data.token;
             localStorage.setItem('user', JSON.stringify(user));
             // Update Authorization header and retry original request
-            originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.token}`;
+            originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
+            // Also update default header for future requests
+            apiClient.defaults.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
+            console.log('Token refreshed successfully. Retrying original request.');
             return apiClient(originalRequest);
+          } else if (
+            refreshResponse.data &&
+            refreshResponse.data.error &&
+            typeof refreshResponse.data.error === 'string' &&
+            refreshResponse.data.error.toLowerCase().includes('invalid refresh token')
+          ) {
+            // If refresh token is invalid, logout user and redirect
+            console.error('Invalid refresh token, logging out.');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return Promise.reject(new Error('Invalid refresh token'));
+          } else {
+            console.error('Refresh API did not return a new token:', refreshResponse.data);
           }
         }
       } catch (refreshError) {
         // If refresh fails, logout user
+        console.error('Token refresh failed:', refreshError);
         localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
