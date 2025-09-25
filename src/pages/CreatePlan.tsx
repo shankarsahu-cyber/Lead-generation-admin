@@ -32,7 +32,7 @@ const CreatePlan: React.FC = () => {
     maxForms: '',
     maxLeadsPerMonth: '',
     maxLocations: '',
-    features: JSON.stringify({ analytics: true, customBranding: false }),
+    features: JSON.stringify({}),
   });
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
@@ -129,7 +129,16 @@ const CreatePlan: React.FC = () => {
     }
 
     try {
-      const response = await createPlan(formData);
+      // Convert features stringified object to array of enabled feature keys
+      let featuresArr = [];
+      try {
+        const featuresObj = JSON.parse(formData.features);
+        featuresArr = Object.keys(featuresObj).filter(key => featuresObj[key]);
+      } catch (err) {
+        featuresArr = [];
+      }
+      const planData = { ...formData, features: JSON.stringify(featuresArr) };
+      const response = await createPlan(planData);
 
       if (!response.success) {
         throw new Error(response.message || response.error || 'Failed to create plan');
@@ -148,7 +157,7 @@ const CreatePlan: React.FC = () => {
         maxForms: '',
         maxLeadsPerMonth: '',
         maxLocations: '',
-        features: JSON.stringify({ analytics: true, customBranding: false }),
+        features: JSON.stringify({}),
       });
       fetchAllPlans();
     } catch (error) {
@@ -227,16 +236,42 @@ const CreatePlan: React.FC = () => {
                 </div>
                 <div className="mt-2">
                   <p className="font-medium">Features:</p>
-                  {JSON.parse(plan.features || '{}').analytics && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Check className="h-3 w-3" /> Analytics
-                    </div>
-                  )}
-                  {JSON.parse(plan.features || '{}').customBranding && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Check className="h-3 w-3" /> Custom Branding
-                    </div>
-                  )}
+                  {(() => {
+                    let featuresArr = [];
+                    try {
+                      const parsed = JSON.parse(plan.features || '[]');
+                      if (Array.isArray(parsed)) {
+                        featuresArr = parsed;
+                      } else if (parsed && typeof parsed === 'object') {
+                        featuresArr = Object.keys(parsed).filter(key => parsed[key]);
+                      }
+                    } catch {
+                      featuresArr = [];
+                    }
+                    const FEATURES_LIST = [
+                      { value: 'analytics', label: 'Analytics' },
+                      { value: 'customBranding', label: 'Custom Branding' },
+                      { value: 'leadCaptureForms', label: 'Lead Capture Forms' },
+                      { value: 'crmIntegration', label: 'CRM Integration' },
+                      { value: 'emailMarketing', label: 'Email Marketing' },
+                      { value: 'landingPages', label: 'Landing Pages' },
+                      { value: 'leadNurturingAutomation', label: 'Lead Nurturing Automation' },
+                      { value: 'leadAnalyticsReporting', label: 'Lead Analytics & Reporting' },
+                      { value: 'leadScoring', label: 'Lead Scoring' },
+                      { value: 'multiChannelCampaigns', label: 'Multi-Channel Campaigns' },
+                      { value: 'conversionTracking', label: 'Conversion Tracking' },
+                      { value: 'aiChatbots', label: 'AI Chatbots' },
+                    ];
+                    if (!featuresArr || featuresArr.length === 0) return <span className="text-xs text-muted-foreground">None</span>;
+                    return featuresArr.map(fKey => {
+                      const f = FEATURES_LIST.find(x => x.value === fKey);
+                      return f ? (
+                        <div key={f.value} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Check className="h-3 w-3" /> {f.label}
+                        </div>
+                      ) : null;
+                    });
+                  })()}
                 </div>
               </div>
             ))}
