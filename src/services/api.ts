@@ -27,6 +27,41 @@ apiClient.interceptors.request.use(
   }
 );
 
+// Add response interceptor for token refresh
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const user = JSON.parse(storedUser);
+          // Call refresh API
+          const refreshResponse = await axios.post('http://13.234.225.69:8888/api/auth/refresh', {
+            refreshToken: user.refreshToken,
+          });
+          if (refreshResponse.data && refreshResponse.data.token) {
+            // Update token in localStorage
+            user.token = refreshResponse.data.token;
+            localStorage.setItem('user', JSON.stringify(user));
+            // Update Authorization header and retry original request
+            originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.token}`;
+            return apiClient(originalRequest);
+          }
+        }
+      } catch (refreshError) {
+        // If refresh fails, logout user
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 interface GenericApiResponse<T> {
   success: boolean;
   message: string;

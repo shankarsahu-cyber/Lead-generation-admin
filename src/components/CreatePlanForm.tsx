@@ -213,7 +213,7 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
     <div ref={ref} style={{ position: 'relative' }}>
       <div
         tabIndex={0}
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((prev) => !prev)}
         style={{
           minHeight: 38,
           border: '1px solid #cbd5e1',
@@ -226,7 +226,6 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
           flexWrap: 'wrap',
           gap: 6,
         }}
-        onFocus={() => setOpen(true)}
       >
         {selectedLabels.map(label => (
           <span key={label} style={{ background: '#e0e7ef', borderRadius: 4, padding: '2px 8px', fontSize: 13 }}>{label}</span>
