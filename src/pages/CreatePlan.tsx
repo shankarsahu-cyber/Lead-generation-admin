@@ -171,12 +171,14 @@ const CreatePlan: React.FC = () => {
         </div>
 
         {/* Form */}
-        <CreatePlanForm
-          formData={formData}
-          handleInputChange={handleInputChange}
-          handleFeatureChange={handleFeatureChange}
-          handleSubmit={handleSubmit}
-        />
+        <div className="createplanform-wide">
+          <CreatePlanForm
+            formData={formData}
+            handleInputChange={handleInputChange}
+            handleFeatureChange={handleFeatureChange}
+            handleSubmit={handleSubmit}
+          />
+        </div>
 
         {/* All Plans List */}
         <Card className="border border-border mt-6">
