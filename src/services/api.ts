@@ -27,12 +27,11 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Add response interceptor for token refresh
+// Response interceptor to handle invalid/expired refresh token and force logout
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // Refresh token on 401 (Unauthorized) or 403 (Forbidden)
     if (
       error.response &&
       (error.response.status === 401 || error.response.status === 403) &&
@@ -43,22 +42,16 @@ apiClient.interceptors.response.use(
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          const refreshUrl = 'http://13.234.225.69:8888/api/auth/refresh';
-          // Debug log
-          console.log('Attempting token refresh with refreshToken:', user.refreshToken);
+          const refreshUrl = `${API_BASE_URL.replace('/admin', '')}/auth/refresh`;
           const refreshResponse = await axios.post(refreshUrl, {
             refreshToken: user.refreshToken,
           });
-          // The token is inside refreshResponse.data.data.token
           if (refreshResponse.data && refreshResponse.data.data && refreshResponse.data.data.token) {
             // Update token in localStorage
             user.token = refreshResponse.data.data.token;
             localStorage.setItem('user', JSON.stringify(user));
-            // Update Authorization header and retry original request
             originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
-            // Also update default header for future requests
             apiClient.defaults.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
-            console.log('Token refreshed successfully. Retrying original request.');
             return apiClient(originalRequest);
           } else if (
             refreshResponse.data &&
@@ -66,18 +59,22 @@ apiClient.interceptors.response.use(
             typeof refreshResponse.data.error === 'string' &&
             refreshResponse.data.error.toLowerCase().includes('invalid refresh token')
           ) {
+            console.error("Refresh token invalid, logging out.", refreshResponse.data.error);
             // If refresh token is invalid, logout user and redirect
-            console.error('Invalid refresh token, logging out.');
             localStorage.removeItem('user');
             window.location.href = '/login';
             return Promise.reject(new Error('Invalid refresh token'));
           } else {
-            console.error('Refresh API did not return a new token:', refreshResponse.data);
+            console.error("Unexpected refresh token response, logging out.", refreshResponse.data);
+            // Any other error, also force logout
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+            return Promise.reject(new Error('Refresh token error'));
           }
         }
       } catch (refreshError) {
+        console.error("Error refreshing token, logging out.", refreshError);
         // If refresh fails, logout user
-        console.error('Token refresh failed:', refreshError);
         localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
