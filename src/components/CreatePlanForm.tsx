@@ -235,6 +235,7 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
           value={search}
           onChange={e => setSearch(e.target.value)}
           onFocus={() => setOpen(true)}
+          onClick={(e) => e.stopPropagation()}
           placeholder={selectedLabels.length === 0 && search === '' ? 'Select features...' : ''}
           style={{
             border: 'none',
