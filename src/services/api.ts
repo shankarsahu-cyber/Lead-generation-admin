@@ -231,6 +231,15 @@ export interface Plan {
   updatedAt: string;
 }
 
+export interface Subscription {
+  id: string;
+  type: string; // e.g., 'BASIC', 'PREMIUM'
+  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'PENDING';
+  startDate: string;
+  endDate: string | null;
+  // Add any other relevant subscription fields
+}
+
 export type AllPlansResponse = GenericApiResponse<Plan[]>;
 
 export const createPlan = async (planData: any): Promise<PlanCreationResponse> => {
@@ -254,6 +263,16 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
     return response.data;
   } catch (error) {
     console.error("Failed to delete plan:", error);
+    throw error;
+  }
+};
+
+export const getMerchantSubscriptions = async (merchantId: string): Promise<Subscription[]> => {
+  try {
+    const response = await apiClient.get<GenericApiResponse<Subscription[]>>(`/admin/merchants/${merchantId}/subscriptions`);
+    return response.data.data;
+  } catch (error) {
+    console.error(`Failed to fetch subscriptions for merchant ${merchantId}:`, error);
     throw error;
   }
 };

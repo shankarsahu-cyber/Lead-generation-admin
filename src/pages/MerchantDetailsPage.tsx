@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { getMerchantDetails, Merchant } from '../services/api';
+import { getMerchantDetails, Merchant, getMerchantSubscriptions, Subscription } from '../services/api';
 import { Pencil } from 'lucide-react';
 
 const MerchantDetailsPage: React.FC = () => {
@@ -14,6 +14,9 @@ const MerchantDetailsPage: React.FC = () => {
   const [merchant, setMerchant] = useState<Merchant | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [loadingSubscriptions, setLoadingSubscriptions] = useState<boolean>(true);
+  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
 
   useEffect(() => {
     if (merchantId) {
@@ -36,6 +39,30 @@ const MerchantDetailsPage: React.FC = () => {
         }
       };
       fetchDetails();
+    }
+  }, [merchantId, toast]);
+
+  useEffect(() => {
+    if (merchantId) {
+      setLoadingSubscriptions(true);
+      setSubscriptionError(null);
+      const fetchSubscriptions = async () => {
+        try {
+          const data = await getMerchantSubscriptions(merchantId);
+          setSubscriptions(data);
+        } catch (err) {
+          console.error("Failed to fetch merchant subscriptions:", err);
+          setSubscriptionError("Failed to load subscriptions.");
+          toast({
+            title: "Error",
+            description: "Failed to load merchant subscriptions.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoadingSubscriptions(false);
+        }
+      };
+      fetchSubscriptions();
     }
   }, [merchantId, toast]);
 
@@ -120,6 +147,36 @@ const MerchantDetailsPage: React.FC = () => {
               <p className="text-muted-foreground">{merchant.timezone}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border border-border">
+        <CardHeader>
+          <CardTitle>Subscriptions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingSubscriptions ? (
+            <div className="text-center py-4">Loading subscriptions...</div>
+          ) : subscriptionError ? (
+            <div className="text-center py-4 text-destructive">Error: {subscriptionError}</div>
+          ) : subscriptions.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground">No subscriptions found for this merchant.</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subscriptions.map((sub) => (
+                <Card key={sub.id} className="border">
+                  <CardHeader>
+                    <CardTitle className="text-lg">Subscription Type: {sub.type}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm space-y-2">
+                    <p><span className="font-medium">Status:</span> <Badge variant={sub.status === 'ACTIVE' ? 'default' : 'destructive'}>{sub.status}</Badge></p>
+                    <p><span className="font-medium">Start Date:</span> {new Date(sub.startDate).toLocaleDateString()}</p>
+                    {sub.endDate && <p><span className="font-medium">End Date:</span> {new Date(sub.endDate).toLocaleDateString()}</p>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
