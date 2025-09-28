@@ -18,6 +18,8 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 
+// Always clear user on app start so login is required every time
+localStorage.removeItem('user');
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

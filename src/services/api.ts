@@ -27,11 +27,12 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle invalid/expired refresh token and force logout
+// Add response interceptor for token refresh
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    // Refresh token on 401 (Unauthorized) or 403 (Forbidden)
     if (
       error.response &&
       (error.response.status === 401 || error.response.status === 403) &&
@@ -42,16 +43,22 @@ apiClient.interceptors.response.use(
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          const refreshUrl = `${API_BASE_URL.replace('/admin', '')}/auth/refresh`;
+          const refreshUrl = 'http://13.234.225.69:8888/api/auth/refresh';
+          // Debug log
+          console.log('Attempting token refresh with refreshToken:', user.refreshToken);
           const refreshResponse = await axios.post(refreshUrl, {
             refreshToken: user.refreshToken,
           });
+          // The token is inside refreshResponse.data.data.token
           if (refreshResponse.data && refreshResponse.data.data && refreshResponse.data.data.token) {
             // Update token in localStorage
             user.token = refreshResponse.data.data.token;
             localStorage.setItem('user', JSON.stringify(user));
+            // Update Authorization header and retry original request
             originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
+            // Also update default header for future requests
             apiClient.defaults.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
+            console.log('Token refreshed successfully. Retrying original request.');
             return apiClient(originalRequest);
           } else if (
             refreshResponse.data &&
@@ -59,22 +66,18 @@ apiClient.interceptors.response.use(
             typeof refreshResponse.data.error === 'string' &&
             refreshResponse.data.error.toLowerCase().includes('invalid refresh token')
           ) {
-            console.error("Refresh token invalid, logging out.", refreshResponse.data.error);
             // If refresh token is invalid, logout user and redirect
+            console.error('Invalid refresh token, logging out.');
             localStorage.removeItem('user');
             window.location.href = '/login';
             return Promise.reject(new Error('Invalid refresh token'));
           } else {
-            console.error("Unexpected refresh token response, logging out.", refreshResponse.data);
-            // Any other error, also force logout
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-            return Promise.reject(new Error('Refresh token error'));
+            console.error('Refresh API did not return a new token:', refreshResponse.data);
           }
         }
       } catch (refreshError) {
-        console.error("Error refreshing token, logging out.", refreshError);
         // If refresh fails, logout user
+        console.error('Token refresh failed:', refreshError);
         localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
@@ -233,12 +236,21 @@ export interface Plan {
 
 export interface Subscription {
   id: string;
-  type: string; // e.g., 'BASIC', 'PREMIUM'
-  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'PENDING';
+  planName: string;
+  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED';
   startDate: string;
-  endDate: string | null;
-  // Add any other relevant subscription fields
+  endDate: string;
+  amount: number;
+  currency: string;
+  billingCycle: 'MONTHLY' | 'YEARLY';
+  nextBillingDate: string;
+  paymentMethod: string;
+  transactionId: string;
+  createdAt: string;
+  updatedAt: string;
 }
+
+export type MerchantSubscriptionsResponse = GenericApiResponse<Subscription[]>;
 
 export type AllPlansResponse = GenericApiResponse<Plan[]>;
 
@@ -269,10 +281,10 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
 
 export const getMerchantSubscriptions = async (merchantId: string): Promise<Subscription[]> => {
   try {
-    const response = await apiClient.get<GenericApiResponse<Subscription[]>>(`/admin/merchants/${merchantId}/subscriptions`);
+    const response = await apiClient.get<MerchantSubscriptionsResponse>(`/admin/merchants/${merchantId}/subscriptions`);
     return response.data.data;
   } catch (error) {
-    console.error(`Failed to fetch subscriptions for merchant ${merchantId}:`, error);
+    console.error("Failed to fetch merchant subscriptions:", error);
     throw error;
   }
 };
