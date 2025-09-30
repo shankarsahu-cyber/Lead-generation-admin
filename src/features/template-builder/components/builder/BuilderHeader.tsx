@@ -197,6 +197,16 @@ export const BuilderHeader = ({
           </Button>
           
           <Button
+            variant="default"
+            size="sm"
+            onClick={onSaveForm}
+            className="gap-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:opacity-90"
+          >
+            <Plus className="h-4 w-4" />
+            Create Template
+          </Button>
+          
+          <Button
             variant="outline"
             size="sm"
             onClick={handleImport}

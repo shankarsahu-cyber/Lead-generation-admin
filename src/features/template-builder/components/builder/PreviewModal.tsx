@@ -10,6 +10,7 @@ interface PreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   formData: FormData;
+  onSaveForm: () => void; // New prop for saving form as template
 }
 
 // Helper to recursively get a nested field by its path
@@ -33,7 +34,7 @@ const getNestedFieldLabel = (fields: FormField[], targetPath: string[]): string 
   return getNestedFieldLabel(field.subFields, targetPath.slice(1));
 };
 
-export const PreviewModal = ({ isOpen, onClose, formData }: PreviewModalProps) => {
+export const PreviewModal = ({ isOpen, onClose, formData, onSaveForm }: PreviewModalProps) => {
   const [currentPreviewStepId, setCurrentPreviewStepId] = useState<string>('');
   const [currentPreviewFieldPath, setCurrentPreviewFieldPath] = useState<string[]>([]);
   const [formValues, setFormValues] = useState<Record<string, any>>({}); // State for preview form values
@@ -207,11 +208,11 @@ export const PreviewModal = ({ isOpen, onClose, formData }: PreviewModalProps) =
             Previous Step
           </Button>
             <Button
-              onClick={handleNextStep}
+              onClick={isLastStep ? onSaveForm : handleNextStep} // Call onSaveForm on last step, otherwise handleNextStep
               disabled={isLastStep && currentPreviewFieldPath.length === 0}
               className="bg-gradient-to-r from-builder-primary to-builder-secondary"
             >
-              {isLastStep ? "✅ Form Complete" : "Next Step"}
+              {isLastStep ? "Create Template" : "Next Step"}
             </Button>
         </div>
       </DialogContent>

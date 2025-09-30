@@ -4,9 +4,11 @@ import { BuilderSidebar } from '../components/builder/BuilderSidebar';
 import { BuilderHeader } from '../components/builder/BuilderHeader';
 import { BuilderContent } from '../components/builder/BuilderContent';
 import { PreviewModal } from '../components/builder/PreviewModal';
-import { FormDashboard } from '../components/dashboard/FormDashboard';
+import MyForms from './MyForms'; // Import MyForms component
 import { useToast } from '../hooks/use-toast';
 import { saveForm } from '../services/api'; // Import saveForm API
+import { getAllForms, deleteForm } from '../services/api'; // Import getAllForms and deleteForm API
+import { createTemplate } from '../services/api'; // Import createTemplate API
 
 interface FormBuilderProps {
   auth?: { token?: string; user?: { id?: string } };
@@ -81,6 +83,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
   const [exportFormat, setExportFormat] = useState<ExportFormat>('generated');
   const [showDashboard, setShowDashboard] = useState(false);
   const [builderSidebarOpen, setBuilderSidebarOpen] = useState(true); // New state for builder sidebar
+  const [refreshDashboard, setRefreshDashboard] = useState(0); // New state to trigger dashboard refresh
   const { toast } = useToast();
 
   const handleFormDataChange = (newFormData: FormData) => {
@@ -108,27 +111,28 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      // Call the saveForm API
-      await saveForm(formData, toast);
+      // Call the createTemplate API
+      await createTemplate(formData, toast);
       
       toast({
-        title: "Form Saved",
-        description: `Form "${formData.name}" saved successfully to API!`,
+        title: "Template Created",
+        description: `Template "${formData.name}" created successfully!`, // Changed from Form Saved
         variant: "default",
       });
+      setRefreshDashboard(prev => prev + 1); // Trigger dashboard refresh
 
       // No need for localStorage fallback or parent onSave handler if API save is successful
     } catch (error) {
       console.error('Save error:', error);
         toast({
           title: "Save Failed",
-          description: `There was an error saving your form: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          description: `There was an error saving your template: ${error instanceof Error ? error.message : 'Unknown error'}`,
           variant: "destructive",
         });
     }
   };
 
-  const handleLoadForm = (formId: string) => {
+  const handleLoadForm = async (formId: string) => {
     try {
       if (!formId) {
         toast({
@@ -139,69 +143,26 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      if (typeof Storage === "undefined") {
-        toast({
-          title: "Load Failed",
-          description: "Your browser doesn't support local storage.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const allForms = await getAllForms(toast);
+      const formToLoad = allForms.find(form => form.name === formId); // Assuming formId is form name for now
 
-      let savedForms = [];
-      const localStorageKey = auth?.user?.id ? `savedForms_${auth.user.id}` : 'savedForms';
-
-      try {
-        const existingData = localStorage.getItem(localStorageKey);
-        if (existingData) {
-          savedForms = decompressFormData(existingData) || [];
-        }
-        if (!Array.isArray(savedForms)) {
-          savedForms = [];
-        }
-      } catch (parseError) {
-        console.error('Error parsing saved forms:', parseError);
-        toast({
-          title: "Load Failed",
-          description: "Saved forms data is corrupted. Please clear your browser data and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const formToLoad = savedForms.find((form: any) => form.formId === formId && form.ownerId === auth?.user?.id);
-      
       if (!formToLoad) {
         toast({
           title: "Load Failed",
-          description: "Form not found or you don't have permission to load it.",
+          description: "Form not found.",
           variant: "destructive",
         });
         return;
       }
 
-      if (!formToLoad.name || !formToLoad.steps || !Array.isArray(formToLoad.steps)) {
-        toast({
-          title: "Load Failed",
-          description: "Invalid form structure. The form data may be corrupted.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const { formId: _, savedAt: __, ownerId: ___, ...loadedFormData } = formToLoad;
-      setFormData(loadedFormData);
+      setFormData(formToLoad);
       setSelectedStepId(formToLoad.steps[0]?.stepId || '');
       setSelectedFieldPath([]);
       setShowDashboard(false);
       
-      setTimeout(() => {
-        setIsPreviewOpen(true);
-      }, 500);
-      
       toast({
         title: "Form Loaded",
-        description: `Form "${formToLoad.name}" has been loaded and preview opened!`,
+        description: `Form "${formToLoad.name}" has been loaded!`, 
         variant: "default",
       });
       
@@ -215,7 +176,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
     }
   };
 
-  const handleDeleteSavedForm = (formId: string) => {
+  const handleDeleteSavedForm = async (formId: string) => {
     try {
       if (!formId) {
         toast({
@@ -226,66 +187,17 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      if (typeof Storage === "undefined") {
-        toast({
-          title: "Delete Failed",
-          description: "Your browser doesn't support local storage.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      let savedForms = [];
-      const localStorageKey = auth?.user?.id ? `savedForms_${auth.user.id}` : 'savedForms';
-
-      try {
-        const existingData = localStorage.getItem(localStorageKey);
-        if (existingData) {
-          savedForms = decompressFormData(existingData) || [];
-        }
-        if (!Array.isArray(savedForms)) {
-          savedForms = [];
-        }
-      } catch (parseError) {
-        console.error('Error parsing saved forms:', parseError);
-        toast({
-          title: "Delete Failed",
-          description: "Saved forms data is corrupted. Please clear your browser data and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const updatedForms = savedForms.filter((form: any) => form.formId !== formId || form.ownerId !== auth?.user?.id);
-      
-      if (updatedForms.length === savedForms.length) {
-        toast({
-          title: "Delete Failed",
-          description: "Form not found or you don't have permission to delete it.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      try {
-        const compressedData = compressFormData(updatedForms);
-        localStorage.setItem(localStorageKey, compressedData);
-      } catch (saveError) {
-        console.error('Error saving updated forms:', saveError);
-        toast({
-          title: "Delete Failed",
-          description: "Could not save changes. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
+      await deleteForm(formId, toast);
       
       toast({
         title: "Form Deleted",
         description: `Form has been deleted successfully!`,
         variant: "default",
       });
-      
+      setRefreshDashboard(prev => prev + 1); // Trigger dashboard refresh
+      // After deleting, trigger a refresh of the forms list in MyForms component.
+      // This will be handled by MyForms component's useEffect which fetches forms on mount.
+
     } catch (error) {
       console.error('Delete error:', error);
       toast({
@@ -449,24 +361,21 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {showDashboard ? (
-          <FormDashboard 
-            savedForms={(() => {
-              try {
-                const existingData = localStorage.getItem('savedForms');
-                return existingData ? decompressFormData(existingData) || [] : [];
-              } catch (error) {
-                console.error('Error loading saved forms for dashboard:', error);
-                return [];
-              }
-            })()}
+          <MyForms 
             onLoadForm={handleLoadForm}
-            onDeleteForm={handleDeleteSavedForm}
+            onPreviewForm={(formToPreview: FormData) => {
+              setFormData(formToPreview);
+              setSelectedStepId(formToPreview.steps[0]?.stepId || '');
+              setSelectedFieldPath([]);
+              setIsPreviewOpen(true);
+            }}
             onNewForm={() => {
               setFormData(initialFormData);
               setSelectedStepId(initialFormData.steps[0].stepId);
               setSelectedFieldPath([]);
               setShowDashboard(false);
             }}
+            refreshTrigger={refreshDashboard} // Pass refresh trigger to MyForms
           />
         ) : (
           <>
@@ -502,6 +411,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         isOpen={isPreviewOpen}
         onClose={() => setIsPreviewOpen(false)}
         formData={formData}
+        onSaveForm={handleSaveForm} // Pass handleSaveForm to PreviewModal
       />
     </div>
   );
