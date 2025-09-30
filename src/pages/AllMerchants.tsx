@@ -178,7 +178,7 @@ const AllMerchants: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border border-border">
+          <div className="rounded-md border border-border overflow-x-auto">
             {loading ? (
               <div className="text-center py-8">Loading merchants...</div>
             ) : error ? (

@@ -18,7 +18,7 @@ const DashboardLayout: React.FC = () => {
           <Navbar onToggleSidebar={toggleSidebar} />
           
           <main className="flex-1 overflow-y-auto bg-background">
-            <div className="p-6">
+            <div className="p-4 sm:p-6">
               <Outlet />
             </div>
           </main>

@@ -166,7 +166,7 @@ const MerchantDetailsPage: React.FC = () => {
               {subscriptions.map((sub) => (
                 <Card key={sub.id} className="border">
                   <CardHeader>
-                    <CardTitle className="text-lg">Subscription Type: {sub.type}</CardTitle>
+                    <CardTitle className="text-lg">Subscription Type: {sub.planName}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm space-y-2">
                     <p><span className="font-medium">Status:</span> <Badge variant={sub.status === 'ACTIVE' ? 'default' : 'destructive'}>{sub.status}</Badge></p>

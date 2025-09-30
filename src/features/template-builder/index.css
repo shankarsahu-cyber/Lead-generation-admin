@@ -1,0 +1,103 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Form Builder Design System - Professional UI with blue/purple gradient theme */
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 224 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 15% 15%;
+
+    --primary: 243 75% 59%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 243 75% 54%;
+
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 224 15% 25%;
+
+    --muted: 220 15% 96%;
+    --muted-foreground: 224 10% 45%;
+
+    --accent: 262 68% 70%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 243 75% 59%;
+
+    /* Builder specific colors */
+    --builder-primary: 243 75% 59%;
+    --builder-secondary: 262 68% 70%;
+    --builder-success: 142 71% 45%;
+    --builder-warning: 38 92% 50%;
+    --builder-danger: 0 84% 60%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(243 75% 59%), hsl(262 68% 70%));
+    --gradient-secondary: linear-gradient(135deg, hsl(220 20% 97%), hsl(220 15% 94%));
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%), hsl(220 20% 98%));
+
+    /* Shadows */
+    --shadow-card: 0 2px 8px hsl(224 15% 15% / 0.08);
+    --shadow-card-hover: 0 4px 16px hsl(224 15% 15% / 0.12);
+    --shadow-button: 0 2px 4px hsl(243 75% 59% / 0.2);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --radius: 0.5rem;
+
+    /* Remove sidebar specific styling here, use global one */
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}

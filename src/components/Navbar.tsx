@@ -23,7 +23,7 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
         >
           <Menu className="h-5 w-5" />
         </Button>
-        <img src="/guc.png" alt="GUC Super Admin Logo" className="h-24 w-auto" />
+        <img src="/guc.png" alt="GUC Super Admin Logo" className="h-auto max-w-full" />
       </div>
 
       <div className="flex items-center gap-4">

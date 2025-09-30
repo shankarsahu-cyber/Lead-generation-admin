@@ -31,6 +31,11 @@ const navigation = [
     href: '/create-plan',
     icon: Plus,
   },
+  {
+    name: 'Template Builder',
+    href: '/template-builder',
+    icon: Plus, // You might want to change this icon
+  },
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
@@ -49,8 +54,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 bg-sidebar border-r border-border transform transition-transform duration-200 ease-in-out lg:relative lg:translate-x-0 lg:z-auto",
-          isOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed top-0 left-0 z-50 h-full w-64 md:w-56 bg-sidebar border-r border-border transform transition-transform duration-200 ease-in-out md:relative md:translate-x-0 md:z-auto",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         )}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-border">

@@ -3,7 +3,7 @@ import axios from 'axios';
 // Use environment variable for API base URL
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://13.234.225.69:8888/api/admin'; 
 
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ export const getMerchants = async (
   size: number = 10
 ): Promise<MerchantListData> => {
   try {
-    const response = await apiClient.get<MerchantResponse>('/admin/merchants', {
+    const response = await apiClient.get<MerchantResponse>('/merchants', {
       params: {
         ...(status && { status }),
         ...(isTrialActive !== undefined && { isTrialActive }),
@@ -181,7 +181,7 @@ export const updateMerchantStatus = async (
   merchantId: string,
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED' | 'CANCELLED'
 ): Promise<void> => {
-  const response = await apiClient.put<GenericApiResponse<any>>(`/admin/merchants/${merchantId}/status?status=${status.toUpperCase()}`);
+  const response = await apiClient.put<GenericApiResponse<any>>(`/merchants/${merchantId}/status?status=${status.toUpperCase()}`);
   if (!response.data.success) {
     throw new Error(response.data.message || "Failed to update merchant status.");
   }
@@ -197,7 +197,7 @@ export const updateMerchantDetails = async (merchantId: string, updatedDetails: 
 
 export const getMerchantDetails = async (merchantId: string): Promise<Merchant> => {
   try {
-    const response = await apiClient.get<GenericApiResponse<Merchant>>(`/admin/merchants/${merchantId}`);
+    const response = await apiClient.get<GenericApiResponse<Merchant>>(`/merchants/${merchantId}`);
     return response.data.data; // This assumes your API response has a 'data' field containing the Merchant object
   } catch (error) {
     console.error("Failed to fetch merchant details from API, returning dummy data:", error);
@@ -261,7 +261,15 @@ export const createPlan = async (planData: any): Promise<PlanCreationResponse> =
 
 export const getAllPlans = async (): Promise<Plan[]> => {
   try {
-    const response = await apiClient.get<AllPlansResponse>('/plans');
+    const storedUser = localStorage.getItem('user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    const token = user?.token;
+
+    const response = await axios.get<AllPlansResponse>('http://13.234.225.69:8888/api/plans', {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
     return response.data.data; // Assuming 'data' field contains an array of plans
   } catch (error) {
     console.error("Failed to fetch all plans:", error);
@@ -281,7 +289,7 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
 
 export const getMerchantSubscriptions = async (merchantId: string): Promise<Subscription[]> => {
   try {
-    const response = await apiClient.get<MerchantSubscriptionsResponse>(`/admin/merchants/${merchantId}/subscriptions`);
+    const response = await apiClient.get<MerchantSubscriptionsResponse>(`/merchants/${merchantId}/subscriptions`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch merchant subscriptions:", error);
