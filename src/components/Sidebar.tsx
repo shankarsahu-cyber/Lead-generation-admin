@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { BarChart3, Users, CreditCard, Plus, X } from 'lucide-react';
+import { BarChart3, Users, Plus, X } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -22,12 +22,7 @@ const navigation = [
     icon: Users,
   },
   {
-    name: 'Subscriptions',
-    href: '/subscriptions',
-    icon: CreditCard,
-  },
-  {
-    name: 'Create New Plan',
+    name: 'Plan Management',
     href: '/create-plan',
     icon: Plus,
   },
@@ -59,7 +54,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         )}
       >
         <div className="flex items-center justify-between h-16 px-6 border-b border-border">
-          <span className="text-lg font-semibold text-sidebar-foreground">Menu</span>
+          <div className="flex-1 flex justify-center">
+            <img src="/guc.png" alt="GUC Logo" className="h-12 w-auto" />
+          </div>
           <Button
             variant="ghost"
             size="icon"

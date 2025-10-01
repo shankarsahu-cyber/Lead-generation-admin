@@ -242,12 +242,6 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      // Show deleting toast
-      toast({
-        title: "Deleting Form... 🗑️",
-        description: "Please wait while your form is being deleted.",
-      });
-
       console.log('Starting delete process for template ID:', id);
       const result = await deleteForm(id, toast);
       console.log('Delete result:', result);

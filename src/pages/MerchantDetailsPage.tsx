@@ -102,7 +102,16 @@ const MerchantDetailsPage: React.FC = () => {
     }
   };
 
-  // Helper function for consistent subscription sorting
+  // Helper function to format date in DD/MM/YYYY format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper function for consistent subscription sorting with proper date sequence
   const sortSubscriptions = (subscriptions: Subscription[]) => {
     const isExpired = (sub: Subscription) => new Date(sub.endDate) < new Date();
     
@@ -118,8 +127,21 @@ const MerchantDetailsPage: React.FC = () => {
       const priorityA = getStatusPriority(a);
       const priorityB = getStatusPriority(b);
       
-      // If same priority, sort by start date (newest first)
+      // If same priority, sort by start date in proper sequence
       if (priorityA === priorityB) {
+        // For pending subscriptions, show in chronological order (oldest start date first)
+        if (a.status === 'PENDING' && b.status === 'PENDING') {
+          return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+        }
+        // For active subscriptions, show by start date (newest first)
+        if (a.status === 'ACTIVE' && b.status === 'ACTIVE') {
+          return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+        }
+        // For expired subscriptions, show by end date (most recently expired first)
+        if ((isExpired(a) || a.status === 'EXPIRED') && (isExpired(b) || b.status === 'EXPIRED')) {
+          return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
+        }
+        // Default: sort by start date
         return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
       }
       
@@ -237,8 +259,8 @@ const MerchantDetailsPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="text-sm space-y-2">
                     <div><span className="font-medium">Status:</span> <Badge variant={getStatusColor(sub.status, sub.endDate)}>{sub.status}</Badge></div>
-                    <p><span className="font-medium">Start Date:</span> {new Date(sub.startDate).toLocaleDateString()}</p>
-                    {sub.endDate && <p><span className="font-medium">End Date:</span> {new Date(sub.endDate).toLocaleDateString()}</p>}
+                    <p><span className="font-medium">Start Date:</span> {formatDate(sub.startDate)}</p>
+                    {sub.endDate && <p><span className="font-medium">End Date:</span> {formatDate(sub.endDate)}</p>}
                     {sub.status === 'PENDING' && (
                       <div className="flex justify-end mt-2">
                         <Button

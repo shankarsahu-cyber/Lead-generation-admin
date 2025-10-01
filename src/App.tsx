@@ -10,7 +10,6 @@ import DashboardLayout from "./components/DashboardLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AllMerchants from "./pages/AllMerchants";
-import Subscriptions from "./pages/Subscriptions";
 import CreatePlan from "./pages/CreatePlan";
 import MerchantDetailsPage from "./pages/MerchantDetailsPage";
 import EditMerchantPage from "./pages/EditMerchantPage";
@@ -54,7 +53,6 @@ const AppContent = () => {
               <Route path="merchants" element={<AllMerchants />} />
               <Route path="merchants/:merchantId" element={<MerchantDetailsPage />} />
               <Route path="merchants/:merchantId/edit" element={<EditMerchantPage />} />
-              <Route path="subscriptions" element={<Subscriptions />} />
               <Route path="create-plan" element={<CreatePlan />} />
               <Route
                 path="template-builder/*"

@@ -182,7 +182,7 @@ export const updateMerchantStatus = async (
   merchantId: string,
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED' | 'CANCELLED'
 ): Promise<void> => {
-  const response = await apiClient.put<GenericApiResponse<any>>(`/merchants/${merchantId}/status?status=${status.toUpperCase()}`);
+  const response = await apiClient.put<GenericApiResponse<any>>(`/admin/merchants/${merchantId}/status?status=${status.toUpperCase()}`);
   if (!response.data.success) {
     throw new Error(response.data.message || "Failed to update merchant status.");
   }

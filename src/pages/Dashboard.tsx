@@ -1,14 +1,74 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, DollarSign, UserCheck, Clock, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Users, TrendingUp, DollarSign, UserCheck, Clock, Target, CheckCircle, XCircle } from 'lucide-react';
+import { getMerchants, updateMerchantStatus, Merchant } from '../services/api';
 
 const Dashboard: React.FC = () => {
+  const [pendingMerchants, setPendingMerchants] = useState<Merchant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch pending merchants on component mount
+  useEffect(() => {
+    fetchPendingMerchants();
+  }, []);
+
+  const fetchPendingMerchants = async () => {
+    try {
+      setLoading(true);
+      const merchantListData = await getMerchants();
+      
+      // getMerchants returns MerchantListData with content property
+      const merchants: Merchant[] = merchantListData?.content || [];
+      
+      // Filter merchants with PENDING status
+      const pending = merchants.filter(merchant => merchant.status === 'PENDING');
+      setPendingMerchants(pending);
+      
+      console.log('Fetched merchants:', merchants.length, 'Pending:', pending.length);
+    } catch (error) {
+      console.error('Failed to fetch pending merchants:', error);
+      setPendingMerchants([]); // Set empty array on error
+      toast({
+        title: "Error",
+        description: "Failed to load pending merchants.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (merchantId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
+    try {
+      await updateMerchantStatus(merchantId, newStatus);
+      
+      // Remove the merchant from pending list after approval/rejection
+      setPendingMerchants(prev => prev.filter(m => m.id !== merchantId));
+      
+      toast({
+        title: newStatus === 'ACTIVE' ? "Merchant Approved! ✅" : "Merchant Rejected ❌",
+        description: `Merchant has been ${newStatus === 'ACTIVE' ? 'approved' : 'rejected'} successfully.`,
+        variant: newStatus === 'ACTIVE' ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error('Failed to update merchant status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update merchant status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Dummy stats data
   const stats = [
     {
-      title: 'Total Leads',
+      title: 'Total Merchant',
       value: '2,847',
       change: '+12.5%',
       changeType: 'positive',
@@ -16,7 +76,7 @@ const Dashboard: React.FC = () => {
       color: 'dashboard-info',
     },
     {
-      title: 'Converted',
+      title: 'Active Merchant',
       value: '1,204',
       change: '+8.2%',
       changeType: 'positive',
@@ -32,7 +92,7 @@ const Dashboard: React.FC = () => {
       color: 'dashboard-info',
     },
     {
-      title: 'Conversion Rate',
+      title: 'Total Subscription',
       value: '42.3%',
       change: '-2.1%',
       changeType: 'negative',
@@ -41,37 +101,7 @@ const Dashboard: React.FC = () => {
     },
   ];
 
-  // Dummy recent activities
-  const recentActivities = [
-    {
-      id: 1,
-      type: 'lead',
-      message: 'New lead from TechCorp Inc.',
-      time: '2 minutes ago',
-      status: 'new',
-    },
-    {
-      id: 2,
-      type: 'conversion',
-      message: 'Lead converted to customer',
-      time: '15 minutes ago',
-      status: 'success',
-    },
-    {
-      id: 3,
-      type: 'follow-up',
-      message: 'Follow-up scheduled with ABC Company',
-      time: '1 hour ago',
-      status: 'pending',
-    },
-    {
-      id: 4,
-      type: 'merchant',
-      message: 'New merchant subscription activated',
-      time: '2 hours ago',
-      status: 'success',
-    },
-  ];
+
 
   // Dummy follow-ups
   const upcomingFollowUps = [
@@ -112,16 +142,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'primary';
-    }
-  };
+
 
   return (
     <div className="space-y-4 md:space-y-6 p-4 md:p-6">
@@ -158,29 +179,69 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Recent Activities */}
+        {/* Pending Merchant Approvals */}
         <Card className="border border-border">
           <CardHeader className="p-4 md:p-6">
             <CardTitle className="flex items-center gap-2 text-base md:text-lg">
-              <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
-              Recent Activities
+              <UserCheck className="h-4 w-4 md:h-5 md:w-5" />
+              Pending Merchant Approvals
             </CardTitle>
-            <CardDescription className="text-sm">Latest updates and activities</CardDescription>
+            <CardDescription className="text-sm">
+              Merchants waiting for approval ({pendingMerchants.length} pending)
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6 pt-0">
-            {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-start md:items-center justify-between gap-2">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {activity.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{activity.time}</p>
-                </div>
-                <Badge variant={getStatusColor(activity.status) as any} className="text-xs shrink-0">
-                  {activity.status}
-                </Badge>
+            {loading ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">Loading pending merchants...</p>
               </div>
-            ))}
+            ) : pendingMerchants.length === 0 ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-muted-foreground">No pending merchants at the moment! 🎉</p>
+              </div>
+            ) : (
+              pendingMerchants.slice(0, 5).map((merchant) => (
+                <div key={merchant.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 border rounded-lg">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {merchant.businessName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {merchant.email} • Applied: {new Date(merchant.createdAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Contact: {merchant.contactNumber}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      onClick={() => handleStatusUpdate(merchant.id, 'ACTIVE')}
+                    >
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => handleStatusUpdate(merchant.id, 'INACTIVE')}
+                    >
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Reject
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+            {pendingMerchants.length > 5 && (
+              <div className="text-center pt-2">
+                <p className="text-xs text-muted-foreground">
+                  Showing 5 of {pendingMerchants.length} pending merchants
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -216,36 +277,7 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
 
-      {/* Conversion Progress */}
-      <Card className="border border-border">
-        <CardHeader className="p-4 md:p-6">
-          <CardTitle className="text-base md:text-lg">Monthly Goals Progress</CardTitle>
-          <CardDescription className="text-sm">Track your progress towards monthly targets</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Leads Generated</span>
-              <span className="text-foreground font-medium">847 / 1000</span>
-            </div>
-            <Progress value={84.7} className="h-2" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Conversions</span>
-              <span className="text-foreground font-medium">204 / 300</span>
-            </div>
-            <Progress value={68} className="h-2" />
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Revenue Target</span>
-              <span className="text-foreground font-medium">$48,520 / $60,000</span>
-            </div>
-            <Progress value={80.9} className="h-2" />
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   );
 };
