@@ -206,9 +206,9 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
     setIsCreateModalOpen(false);
   };
 
-  const handleDeleteSavedForm = async (formId: string) => {
+  const handleDeleteSavedForm = async (id: number) => {
     try {
-      if (!formId) {
+      if (!id) {
         toast({
           title: "Delete Failed",
           description: "Invalid form ID provided.",
@@ -217,7 +217,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      await deleteForm(formId, toast);
+      await deleteForm(id, toast);
       
       toast({
         title: "Form Deleted",

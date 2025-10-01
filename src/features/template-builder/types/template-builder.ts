@@ -62,7 +62,8 @@ export interface FormTheme {
 }
 
 export interface FormData {
-  id?: string | number; // Add optional id property
+  id?: number; // Backend's numerical ID
+  formId: string; // Derived string identifier for internal use
   name: string;
   description: string;
   category: TemplateCategory; // Make category mandatory

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FormData, FormStep, FormField, TreeNode, ExportFormat, APIFormData } from '../types/form-builder';
 import { BuilderSidebar } from '../components/builder/BuilderSidebar';
 import { BuilderHeader } from '../components/builder/BuilderHeader';
@@ -7,6 +7,7 @@ import { PreviewModal } from '../components/builder/PreviewModal';
 import { FormDashboard } from '../components/dashboard/FormDashboard';
 import { Plus } from 'lucide-react';
 import { useToast } from '../hooks/use-toast';
+import { getTemplateById, getAllForms } from '../services/api'; // Import the new API function
 
 interface FormBuilderProps {
   auth?: { token?: string; user?: { id?: string } };
@@ -82,15 +83,36 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [builderSidebarOpen, setBuilderSidebarOpen] = useState(true); // New state for builder sidebar
   const { toast } = useToast();
+  const [allTemplates, setAllTemplates] = useState<FormData[]>([]);
+
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const fetchedTemplates = await getAllForms(toast);
+        setAllTemplates(fetchedTemplates);
+      } catch (error) {
+        console.error("Error fetching all templates:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load templates.",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchTemplates();
+  }, [toast]);
+
 
   const handleFormDataChange = (newFormData: FormData) => {
     setFormData(newFormData);
   };
 
-  const handleSaveForm = async () => {
+  const handleSaveForm = async (formToSaveFromDashboard?: FormData) => {
     try {
+      const currentFormData = formToSaveFromDashboard || formData; // Use passed formData or current state
+
       // Validate form data
-      if (!formData.name || formData.name.trim() === '') {
+      if (!currentFormData.name || currentFormData.name.trim() === '') {
         toast({
           title: "Save Failed",
           description: "Please provide a form name before saving.",
@@ -99,7 +121,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      if (!formData.steps || formData.steps.length === 0) {
+      if (!currentFormData.steps || currentFormData.steps.length === 0) {
         toast({
           title: "Save Failed",
           description: "Form must have at least one step to save.",
@@ -110,7 +132,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
 
       // Prepare data for saving
       const formToSave = {
-        ...formData,
+        ...currentFormData,
         savedAt: new Date().toISOString(),
         ownerId: auth?.user?.id, // Include ownerId from auth prop
       };
@@ -119,7 +141,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         await onSave(formToSave);
         toast({
           title: "Form Saved",
-          description: `Form "${formData.name}" saved successfully via parent handler!`,
+          description: `Form "${currentFormData.name}" saved successfully via parent handler!`,
           variant: "default",
         });
         return;
@@ -151,7 +173,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         savedForms = [];
       }
 
-      const baseFormId = formData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-') || 'untitled-form';
+      const baseFormId = currentFormData.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').trim('-') || 'untitled-form';
       let formId = baseFormId;
       let counter = 1;
       
@@ -263,7 +285,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       
       toast({
         title: existingFormIndex > -1 ? "Form Updated" : "Form Saved",
-        description: `Form "${formData.name}" ${existingFormIndex > -1 ? 'updated' : 'saved'} successfully! (${formatBytes(dataSize)})`,
+        description: `Form "${currentFormData.name}" ${existingFormIndex > -1 ? 'updated' : 'saved'} successfully! (${formatBytes(dataSize)})`,
         variant: "default",
       });
 
@@ -616,15 +638,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         {showDashboard ? (
           <FormDashboard 
-            savedForms={(() => {
-              try {
-                const existingData = localStorage.getItem('savedForms');
-                return existingData ? decompressFormData(existingData) || [] : [];
-              } catch (error) {
-                console.error('Error loading saved forms for dashboard:', error);
-                return [];
-              }
-            })()}
+            savedForms={allTemplates}
             onLoadForm={handleLoadForm}
             onDeleteForm={handleDeleteSavedForm}
             onNewForm={() => {
@@ -633,6 +647,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
               setSelectedFieldPath([]);
               setShowDashboard(false);
             }}
+            onSaveTemplate={handleSaveForm} // Pass handleSaveForm here
           />
         ) : (
           <>

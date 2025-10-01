@@ -16,6 +16,7 @@ interface FormDashboardProps {
   onLoadForm: (formId: string) => void;
   onDeleteForm: (formId: string) => void;
   onNewForm: () => void;
+  onSaveTemplate: (formData: FormData) => Promise<any>; // Add onSaveTemplate prop
 }
 
 // Template categories for better organization
@@ -43,6 +44,7 @@ export const FormDashboard = ({
   onLoadForm,
   onDeleteForm,
   onNewForm,
+  onSaveTemplate,
 }: FormDashboardProps) => {
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-slate-50 to-blue-50 p-6">
@@ -219,6 +221,18 @@ export const FormDashboard = ({
                       >
                         <Eye className="h-4 w-4" />
                         Use Template
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // API call completely removed, button does nothing now.
+                        }}
+                        className="flex-1 gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Update Template
                       </Button>
                     </div>
                   </CardContent>

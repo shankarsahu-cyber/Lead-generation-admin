@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FolderOpen, Eye, Download, Trash2, PlusCircle } from 'lucide-react';
+import { FolderOpen, Eye, Download, Trash2, PlusCircle, Edit } from 'lucide-react';
 import { useToast } from '../../../hooks/use-toast'; // Corrected path
 import { getAllForms, deleteForm } from '../services/api'; // Corrected path
 import { FormData } from '../../types/template-builder';
@@ -18,11 +18,11 @@ import {
 } from '../components/ui/alert-dialog';
 
 interface MyFormsProps {
-  onLoadForm: (formId: string) => void;
+  onLoadForm: (id: number) => void; // Expects numerical ID
   onPreviewForm: (formData: FormData) => void;
   onNewForm: () => void;
   refreshTrigger: number; // New prop to trigger refresh
-  onDeleteForm: (templateId: string) => void; // New prop for deleting forms
+  onDeleteForm: (id: number) => void; // New prop for deleting forms
 }
 
 const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm, refreshTrigger, onDeleteForm }) => {
@@ -31,7 +31,7 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm,
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [templateToDeleteId, setTemplateToDeleteId] = useState<string | null>(null);
+  const [templateToDeleteId, setTemplateToDeleteId] = useState<number | null>(null); // State to store numerical ID
 
   const fetchForms = async () => {
     setLoading(true);
@@ -54,9 +54,9 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm,
     fetchForms();
   }, [refreshTrigger]); // Add refreshTrigger to dependency array
 
-  const handleDeleteClick = (templateId: string) => {
-    console.log("MyForms: Delete button clicked for templateId:", templateId);
-    setTemplateToDeleteId(templateId);
+  const handleDeleteClick = (id: number) => {
+    console.log("MyForms: Delete button clicked for templateId:", id);
+    setTemplateToDeleteId(id);
     setIsDeleteDialogOpen(true);
   };
 
@@ -107,20 +107,17 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm,
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-end gap-2 pt-0">
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1" onClick={() => onPreviewForm(form)}>
+                  <Button variant="outline" size="sm" onClick={() => onPreviewForm(form)}>
                     <Eye className="h-4 w-4 mr-2" /> Preview
                   </Button>
-                  <Button variant="default" size="sm" className="flex-1" onClick={() => onLoadForm(form.formId)}>
+                  <Button variant="default" size="sm" className="flex-1" onClick={() => onLoadForm(form.id)}>
                     <Download className="h-4 w-4 mr-2" /> Use Template
                   </Button>
                 </div>
-                <Button variant="secondary" size="sm" className="w-full">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-2">
-                    <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.187 1.187Q14.97 4.393 14.5 4.863c-.563.562-.897 1.25-.994 2.025.21-.012.424-.025.64-.025h2.328c.325 0 .647.05.959.144L21.731 5.99a2.625 2.625 0 000-3.712zM12.75 11.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM12.75 18a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM15.75 14.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM18.75 6.75h-.008v-.008H18.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 11.25a.75.75 0 01.75-.75h.008v.008H12.75V11.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 18a.75.75 0 01.75-.75h.008v.008H12.75V18zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 15a.75.75 0 01.75-.75H12a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 6.75a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 10.5a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75z" />
-                  </svg>
-                  Update Template
+                <Button variant="outline" size="sm" onClick={() => onLoadForm(form.id)}>
+                  <Edit className="h-4 w-4 mr-2" /> Update Template
                 </Button>
-                <Button variant="destructive" size="sm">
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(form.id)}>
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </Button>
               </CardContent>

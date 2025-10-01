@@ -119,7 +119,7 @@ export const saveForm = async (formData: FormData, toast: (props: ToastFunctionP
       isActive: true, // Default to active
     };
 
-    const response = await apiClient.post<SaveFormResponse>(`/forms`, apiFormData);
+    const response = await apiClient.post<SaveFormResponse>(`/admin/templates`, apiFormData);
 
     if (response.data.success) {
       toast({
@@ -156,7 +156,7 @@ interface CreateTemplateResponse {
 
 export const saveTemplate = async (formData: FormData, toast: (props: ToastFunctionProps) => void): Promise<CreateTemplateResponse> => {
   const isUpdate = formData.id !== undefined && formData.id !== null;
-  const endpoint = isUpdate ? `/templates/${formData.id}` : `/templates`;
+  const endpoint = isUpdate ? `/admin/templates/${formData.id}` : `/admin/templates`; // Use formData.id (number)
   const method = isUpdate ? apiClient.put : apiClient.post;
 
   toast({
@@ -221,18 +221,23 @@ export const saveTemplate = async (formData: FormData, toast: (props: ToastFunct
   }
 };
 
-export const getAllForms = async (toast: (props: ToastFunctionProps) => void): Promise<FormData[]> => {
+export const getAllForms = async (toast: (props: ToastFunctionProps) => void, category?: TemplateCategory): Promise<FormData[]> => {
   try {
-    const response = await apiClient.get<AllTemplatesResponse>(`/templates`);
+    const response = await apiClient.get<AllTemplatesResponse>(`/admin/templates`, {
+      params: {
+        ...(category && { category }),
+      },
+    });
 
     const parsedTemplates: FormData[] = response.data.map(apiForm => {
       try {
         const formPayload = JSON.parse(apiForm.formPayload);
         return {
           ...formPayload,
+          id: apiForm.id, // Assign backend's numerical ID
           name: apiForm.name,
           description: apiForm.description,
-          formId: (formPayload as any).formId || String(apiForm.id) || apiForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') // Use apiForm.id as fallback for formId
+          formId: (formPayload as any).formId || String(apiForm.id) || apiForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') // Ensure formId is a string
         };
       } catch (parseError) {
         console.error('Error parsing templatePayload for template:', apiForm.name, parseError);
@@ -262,14 +267,14 @@ interface DeleteFormResponse {
   message: string;
 }
 
-export const deleteForm = async (templateId: string, toast: (props: ToastFunctionProps) => void): Promise<DeleteFormResponse> => {
+export const deleteForm = async (templateId: number, toast: (props: ToastFunctionProps) => void): Promise<DeleteFormResponse> => {
   toast({
     title: "Deleting template...", // Changed from form
     description: "Please wait while your template is being deleted.", // Changed from form
   });
 
   try {
-    const response = await apiClient.delete<DeleteFormResponse>(`/templates/${templateId}`); // Changed endpoint to /templates
+    const response = await apiClient.delete<DeleteFormResponse>(`/admin/templates/${templateId}`); // Use templateId (number)
 
     if (response.data.success) {
       toast({
@@ -290,6 +295,46 @@ export const deleteForm = async (templateId: string, toast: (props: ToastFunctio
     toast({
       title: "Delete Failed",
       description: "There was an error deleting your template.", // Changed from form
+      variant: "destructive",
+    });
+    throw error;
+  }
+};
+
+interface GetTemplateResponse {
+  success: boolean;
+  message: string;
+  data: APIFormData; // Assuming APIFormData is the structure for a single template
+}
+
+export const getTemplateById = async (templateId: number, toast: (props: ToastFunctionProps) => void): Promise<APIFormData> => {
+  toast({
+    title: "Loading template...",
+    description: "Please wait while your template is being loaded.",
+  });
+
+  try {
+    const response = await apiClient.get<GetTemplateResponse>(`/admin/templates/${templateId}`);
+
+    if (response.data.success) {
+      toast({
+        title: "Template Loaded Successfully",
+        description: response.data.message || "Your template has been loaded.",
+      });
+      return response.data.data;
+    } else {
+      toast({
+        title: "Load Failed",
+        description: response.data.message || "There was an error loading your template.",
+        variant: "destructive",
+      });
+      throw new Error(response.data.message || "Failed to load template");
+    }
+  } catch (error) {
+    console.error('Template load failed:', error);
+    toast({
+      title: "Load Failed",
+      description: "There was an error loading your template.",
       variant: "destructive",
     });
     throw error;
