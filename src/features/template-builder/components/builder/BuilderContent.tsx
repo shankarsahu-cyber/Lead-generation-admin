@@ -35,6 +35,7 @@ interface BuilderContentProps {
   onFormDataChange: (data: FormData) => void;
   onFieldSelect: (fieldPath: string[]) => void;
   onStepSelect: (stepId: string) => void;
+  isFormDetailsComplete: boolean; // New prop
 }
 
 const fieldTypeIcons: Record<FieldType, React.ComponentType<{ className?: string }>> = {
@@ -70,6 +71,7 @@ export const BuilderContent = ({
   onFormDataChange,
   onFieldSelect,
   onStepSelect,
+  isFormDetailsComplete // Destructure new prop
 }: BuilderContentProps) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [currentFormValues, setCurrentFormValues] = useState<Record<string, any>>({});
@@ -265,7 +267,7 @@ export const BuilderContent = ({
                 Back
               </Button>
             )}
-            <FieldTypeDropdown onSelectType={addNewField} />
+            <FieldTypeDropdown onSelectType={addNewField} disabled={!isFormDetailsComplete} />
           </div>
         </div>
       </div>
@@ -281,7 +283,7 @@ export const BuilderContent = ({
               <p className="text-sm text-muted-foreground mb-4">
                 Add your first field to start building your form
               </p>
-              <FieldTypeDropdown onSelectType={addNewField} />
+              <FieldTypeDropdown onSelectType={addNewField} disabled={!isFormDetailsComplete} />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -300,6 +302,7 @@ export const BuilderContent = ({
                   onAddSubfield={(parentFieldId, type) => addNewFieldToPath([...selectedFieldPath, parentFieldId], type)}
                   handleFieldChange={handleFieldChange}
                   onValueChange={handleFieldChange} // Pass handleFieldChange to onValueChange
+                  isFormDetailsComplete={isFormDetailsComplete} // Pass the new prop
                 />
               ))}
             </div>
@@ -323,7 +326,10 @@ export const BuilderContent = ({
   );
 };
 
-const FieldTypeDropdown = ({ onSelectType }: { onSelectType: (type: FieldType) => void }) => {
+const FieldTypeDropdown = ({
+  onSelectType,
+  disabled // Add disabled prop here
+}: { onSelectType: (type: FieldType) => void; disabled?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const fieldTypes: FieldType[] = [
@@ -337,6 +343,7 @@ const FieldTypeDropdown = ({ onSelectType }: { onSelectType: (type: FieldType) =
       <Button
         onClick={() => setIsOpen(!isOpen)}
         className="gap-2 bg-gradient-to-r from-builder-primary to-builder-secondary hover:opacity-90"
+        disabled={disabled} // Apply disabled prop to the button
       >
         <Plus className="h-4 w-4" />
         Add Field
@@ -358,6 +365,7 @@ const FieldTypeDropdown = ({ onSelectType }: { onSelectType: (type: FieldType) =
                       onSelectType(type);
                       setIsOpen(false);
                     }}
+                    disabled={disabled} // Apply disabled prop to dropdown items
                   >
                     <Icon className="h-4 w-4" />
                     <span className="text-xs truncate">{fieldTypeLabels[type]}</span>
@@ -392,6 +400,7 @@ interface FieldCardProps {
   onAddSubfield: (parentFieldId: string, type: FieldType) => void;
   handleFieldChange: (fieldId: string, value: any) => void;
   onValueChange: (fieldId: string, value: any) => void; // Add this line
+  isFormDetailsComplete: boolean; // New prop
 }
 
 const FieldCard = ({
@@ -407,6 +416,7 @@ const FieldCard = ({
   onAddSubfield,
   handleFieldChange,
   onValueChange,
+  isFormDetailsComplete // Destructure new prop
 }: FieldCardProps) => {
   const Icon = fieldTypeIcons[field.type];
   
@@ -440,6 +450,7 @@ const FieldCard = ({
                   e.stopPropagation();
                   onEdit();
                 }}
+                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
                 <Edit className="h-3 w-3" />
               </Button>
@@ -451,6 +462,7 @@ const FieldCard = ({
                   e.stopPropagation();
                   onDelete();
                 }}
+                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -484,7 +496,7 @@ const FieldCard = ({
                 </Badge>
               )}
             </div>
-            <FieldTypeDropdown onSelectType={(type) => onAddSubfield(field.fieldId, type)} />
+            <FieldTypeDropdown onSelectType={(type) => onAddSubfield(field.fieldId, type)} disabled={!isFormDetailsComplete} />
           </div>
         </CardContent>
       </Card>
@@ -519,6 +531,7 @@ const FieldCard = ({
                 e.stopPropagation();
                 onEdit();
               }}
+              disabled={!isFormDetailsComplete} // Disable if form details are not complete
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -530,6 +543,7 @@ const FieldCard = ({
                 e.stopPropagation();
                 onDelete();
               }}
+              disabled={!isFormDetailsComplete} // Disable if form details are not complete
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -554,7 +568,7 @@ const FieldCard = ({
               </Badge>
             )}
           </div>
-          <FieldTypeDropdown onSelectType={(type) => onAddSubfield(field.fieldId, type)} />
+          <FieldTypeDropdown onSelectType={(type) => onAddSubfield(field.fieldId, type)} disabled={!isFormDetailsComplete} />
         </div>
       </CardContent>
       {/* Render input element for preview/interaction */}
@@ -564,6 +578,7 @@ const FieldCard = ({
             <Input
               placeholder={field.placeholder || "Enter text"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
+              disabled={!isFormDetailsComplete} // Disable input
             />
           )}
           {field.type === 'email' && (
@@ -571,6 +586,7 @@ const FieldCard = ({
               type="email"
               placeholder={field.placeholder || "Enter email"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
+              disabled={!isFormDetailsComplete} // Disable input
             />
           )}
           {field.type === 'phone' && (
@@ -578,6 +594,7 @@ const FieldCard = ({
               type="tel"
               placeholder={field.placeholder || "Enter phone number"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
+              disabled={!isFormDetailsComplete} // Disable input
             />
           )}
           {field.type === 'number' && (
@@ -585,16 +602,18 @@ const FieldCard = ({
               type="number"
               placeholder={field.placeholder || "Enter number"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
+              disabled={!isFormDetailsComplete} // Disable input
             />
           )}
           {field.type === 'text_area' && (
             <Textarea
               placeholder={field.placeholder || "Enter a detailed response"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
+              disabled={!isFormDetailsComplete} // Disable textarea
             />
           )}
           {(field.type === 'dropdown' || field.type === 'radio') && field.options && (
-            <Select onValueChange={(value) => onValueChange(field.fieldId, value)}>
+            <Select onValueChange={(value) => onValueChange(field.fieldId, value)} disabled={!isFormDetailsComplete}> // Disable select
               <SelectTrigger>
                 <SelectValue placeholder={field.placeholder || "Select an option"} />
               </SelectTrigger>
@@ -621,6 +640,7 @@ const FieldCard = ({
                         onValueChange(field.fieldId, currentValues.filter((val: string) => val !== option.value));
                       }
                     }}
+                    disabled={!isFormDetailsComplete} // Disable checkbox
                   />
                   <Label htmlFor={option.optionId}>{option.label}</Label>
                 </div>

@@ -5,28 +5,44 @@ import { FolderOpen, Eye, Download, Trash2, PlusCircle } from 'lucide-react';
 import { useToast } from '../../../hooks/use-toast'; // Corrected path
 import { getAllForms, deleteForm } from '../services/api'; // Corrected path
 import { FormData } from '../../types/template-builder';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '../components/ui/alert-dialog';
 
 interface MyFormsProps {
   onLoadForm: (formId: string) => void;
   onPreviewForm: (formData: FormData) => void;
   onNewForm: () => void;
   refreshTrigger: number; // New prop to trigger refresh
+  onDeleteForm: (templateId: string) => void; // New prop for deleting forms
 }
 
-const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm }) => {
+const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm, refreshTrigger, onDeleteForm }) => {
   const { toast } = useToast();
   const [forms, setForms] = useState<FormData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [templateToDeleteId, setTemplateToDeleteId] = useState<string | null>(null);
 
   const fetchForms = async () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("MyForms: Fetching forms...");
       const fetchedForms = await getAllForms(toast);
       setForms(fetchedForms);
+      console.log("MyForms: Forms fetched successfully.", fetchedForms);
     } catch (err) {
-      console.error("Failed to fetch forms:", err);
+      console.error("MyForms: Failed to fetch forms:", err);
       setError("Failed to load forms.");
     } finally {
       setLoading(false);
@@ -34,26 +50,22 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm 
   };
 
   useEffect(() => {
+    console.log("MyForms: useEffect triggered, refreshTrigger changed:", refreshTrigger);
     fetchForms();
   }, [refreshTrigger]); // Add refreshTrigger to dependency array
 
-  const handleDelete = async (formId: string) => {
-    if (window.confirm("Are you sure you want to delete this form?")) {
-      try {
-        await deleteForm(formId, toast);
-        toast({
-          title: "Form Deleted",
-          description: "Form has been successfully deleted.",
-        });
-        fetchForms(); // Refresh the list
-      } catch (err) {
-        console.error("Failed to delete form:", err);
-        toast({
-          title: "Delete Failed",
-          description: "There was an error deleting the form.",
-          variant: "destructive",
-        });
-      }
+  const handleDeleteClick = (templateId: string) => {
+    console.log("MyForms: Delete button clicked for templateId:", templateId);
+    setTemplateToDeleteId(templateId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (templateToDeleteId) {
+      console.log("MyForms: Delete confirmed for templateId:", templateToDeleteId);
+      onDeleteForm(templateToDeleteId);
+      setTemplateToDeleteId(null);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -85,8 +97,10 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm 
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {forms.map(form => (
-            <Card key={form.name} className="flex flex-col">
+          {forms.map(form => {
+            console.log("MyForms: Rendering card for form with formId:", form.formId, "and name:", form.name); // Log formId
+            return (
+            <Card key={form.formId} className="flex flex-col">
               <CardHeader>
                 <CardTitle>{form.name}</CardTitle>
                 <CardDescription className="line-clamp-2">{form.description}</CardDescription>
@@ -100,14 +114,38 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm 
                     <Download className="h-4 w-4 mr-2" /> Use Template
                   </Button>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(form.formId)}>
+                <Button variant="secondary" size="sm" onClick={() => onLoadForm(form.formId)} className="w-full">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-2">
+                    <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.187 1.187Q14.97 4.393 14.5 4.863c-.563.562-.897 1.25-.994 2.025.21-.012.424-.025.64-.025h2.328c.325 0 .647.05.959.144L21.731 5.99a2.625 2.625 0 000-3.712zM12.75 11.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM12.75 18a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM15.75 14.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM18.75 6.75h-.008v-.008H18.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 11.25a.75.75 0 01.75-.75h.008v.008H12.75V11.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 18a.75.75 0 01.75-.75h.008v.008H12.75V18zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 15a.75.75 0 01.75-.75H12a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 6.75a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 10.5a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75z" />
+                  </svg>
+                  Update Template
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(form.formId)}>
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </Button>
               </CardContent>
             </Card>
-          ))}
+          );
+          })}
         </div>
       )}
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Template Deletion</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this template? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

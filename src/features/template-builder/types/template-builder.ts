@@ -62,8 +62,10 @@ export interface FormTheme {
 }
 
 export interface FormData {
+  id?: string | number; // Add optional id property
   name: string;
   description: string;
+  category: TemplateCategory; // Make category mandatory
   steps: FormStep[];
   settings: FormSettings;
   theme?: FormTheme;

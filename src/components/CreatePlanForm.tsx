@@ -114,6 +114,7 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
             <option value="">Select cycle</option>
             <option value="MONTHLY">Monthly</option>
             <option value="YEARLY">Yearly</option>
+            <option value="ADDON">Addons</option>
           </select>
         </div>
         <div>

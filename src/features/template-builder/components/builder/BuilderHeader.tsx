@@ -30,6 +30,7 @@ interface BuilderHeaderProps {
   isDashboardActive: boolean;
   onToggleBuilderSidebar: () => void; // New prop
   isBuilderSidebarOpen: boolean; // New prop
+  onNewForm: () => void; // New prop for creating a new form
 }
 
 export const BuilderHeader = ({
@@ -44,7 +45,8 @@ export const BuilderHeader = ({
   onToggleDashboard,
   isDashboardActive,
   onToggleBuilderSidebar, // Destructure new prop
-  isBuilderSidebarOpen // Destructure new prop
+  isBuilderSidebarOpen, // Destructure new prop
+  onNewForm // Destructure new prop
 }: BuilderHeaderProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(formName);
@@ -199,7 +201,7 @@ export const BuilderHeader = ({
           <Button
             variant="default"
             size="sm"
-            onClick={onSaveForm}
+            onClick={onNewForm} // Changed to onNewForm
             className="gap-2 bg-gradient-to-r from-blue-500 to-blue-700 hover:opacity-90"
           >
             <Plus className="h-4 w-4" />

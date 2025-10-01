@@ -124,6 +124,7 @@ export interface Merchant {
   website: string;
   status: 'ACTIVE' | 'INACTIVE' | 'PENDING' | 'SUSPENDED' | 'CANCELLED';
   plan: string;
+  activePlanName?: string; // Add new optional property for the active plan name
   revenue: string;
   joinDate: string;
   lastLogin: string;
@@ -225,7 +226,7 @@ export interface Plan {
   name: string;
   description: string;
   price: string;
-  billingCycle: 'MONTHLY' | 'YEARLY';
+  billingCycle: 'MONTHLY' | 'YEARLY' | 'ADDON'; // Changed 'ADDONS' to 'ADDON'
   maxForms: number;
   maxLeadsPerMonth: number;
   maxLocations: number;
@@ -237,12 +238,12 @@ export interface Plan {
 export interface Subscription {
   id: string;
   planName: string;
-  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED';
+  status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED' | 'PENDING';
   startDate: string;
   endDate: string;
   amount: number;
   currency: string;
-  billingCycle: 'MONTHLY' | 'YEARLY';
+  billingCycle: 'MONTHLY' | 'YEARLY' | 'ADDON';
   nextBillingDate: string;
   paymentMethod: string;
   transactionId: string;
@@ -255,8 +256,24 @@ export type MerchantSubscriptionsResponse = GenericApiResponse<Subscription[]>;
 export type AllPlansResponse = GenericApiResponse<Plan[]>;
 
 export const createPlan = async (planData: any): Promise<PlanCreationResponse> => {
-  const response = await apiClient.post<PlanCreationResponse>('/plans', planData);
-  return response.data;
+  try {
+    const storedUser = localStorage.getItem('user');
+    const user = storedUser ? JSON.parse(storedUser) : null;
+    const token = user?.token;
+
+    // Construct the full URL to bypass the apiClient's /admin base URL for this specific endpoint
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/plans`;
+
+    const response = await axios.post<PlanCreationResponse>(fullUrl, planData, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to create plan:", error);
+    throw error;
+  }
 };
 
 export const getAllPlans = async (): Promise<Plan[]> => {
@@ -265,7 +282,10 @@ export const getAllPlans = async (): Promise<Plan[]> => {
     const user = storedUser ? JSON.parse(storedUser) : null;
     const token = user?.token;
 
-    const response = await axios.get<AllPlansResponse>('http://13.234.225.69:8888/api/plans', {
+    // Construct the full URL to bypass the apiClient's /admin base URL for this specific endpoint
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/plans`;
+
+    const response = await axios.get<AllPlansResponse>(fullUrl, { // Changed to axios.get with fullUrl
       headers: {
         Authorization: token ? `Bearer ${token}` : '',
       },
@@ -287,12 +307,75 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
   }
 };
 
+export const updateMerchantPlan = async (merchantId: string, planId: string): Promise<Merchant> => {
+  try {
+    const response = await apiClient.put<GenericApiResponse<Merchant>>(`/merchants/${merchantId}/assign-plan`, { planId });
+    if (!response.data.success) {
+      throw new Error(response.data.message || "Failed to assign plan to merchant.");
+    }
+    return response.data.data; // Assuming data field contains the updated Merchant object
+  } catch (error) {
+    console.error("Failed to update merchant plan:", error);
+    throw error;
+  }
+};
+
+export const createMerchantSubscription = async (merchantId: string, planId: string): Promise<Subscription> => {
+  try {
+    // Construct the full URL for addon subscriptions
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/addons`;
+    // Expecting a direct Subscription object response, not a GenericApiResponse wrapper
+    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, planId });
+    
+    // No success check needed if the API returns a 2xx status with the data directly
+    // If the backend returns a non-2xx status, Axios will throw an error, which the catch block handles
+    
+    return response.data; // Directly return the Subscription object
+  } catch (error) {
+    console.error("Failed to create merchant subscription:", error);
+    throw error;
+  }
+};
+
 export const getMerchantSubscriptions = async (merchantId: string): Promise<Subscription[]> => {
   try {
     const response = await apiClient.get<MerchantSubscriptionsResponse>(`/merchants/${merchantId}/subscriptions`);
     return response.data.data;
   } catch (error) {
     console.error("Failed to fetch merchant subscriptions:", error);
+    throw error;
+  }
+};
+
+export const assignMerchantPlan = async (merchantId: string, planId: string): Promise<Subscription> => {
+  try {
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions`;
+    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, planId });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to assign merchant plan:", error);
+    throw error;
+  }
+};
+
+export const updateSubscriptionStatus = async (subscriptionId: string, status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED'): Promise<Subscription> => {
+  try {
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/${subscriptionId}/status`;
+    const response = await apiClient.put<Subscription>(fullUrl, { status });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update subscription status:", error);
+    throw error;
+  }
+};
+
+export const forceActivateSubscription = async (subscriptionId: string, merchantId: string, notes: string): Promise<Subscription> => {
+  try {
+    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/force-activate`;
+    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, subscriptionId, notes });
+    return response.data;
+  } catch (error) {
+    console.error("Failed to force activate subscription:", error);
     throw error;
   }
 };

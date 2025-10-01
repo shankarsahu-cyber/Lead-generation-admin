@@ -27,6 +27,7 @@ interface BuilderSidebarProps {
   treeNodes: Map<string, TreeNode>;
   onTreeNodesChange: (nodes: Map<string, TreeNode>) => void;
   isOpen: boolean; // Add isOpen prop
+  isFormDetailsComplete: boolean; // New prop
 }
 
 export const BuilderSidebar = ({
@@ -40,7 +41,8 @@ export const BuilderSidebar = ({
   onStepTitleChange, // Destructure onStepTitleChange prop
   treeNodes,
   onTreeNodesChange,
-  isOpen
+  isOpen,
+  isFormDetailsComplete // Destructure new prop
 }: BuilderSidebarProps) => {
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(['root']));
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
@@ -254,6 +256,7 @@ export const BuilderSidebar = ({
                   setEditingNodeId(node.id);
                 }}
                 aria-label={`Edit step ${node.label}`}
+                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
                 <Edit2 className="h-3 w-3" />
               </Button>
@@ -266,6 +269,7 @@ export const BuilderSidebar = ({
                   handleDeleteStep(node.id);
                 }}
                 aria-label={`Delete step ${node.label}`}
+                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
@@ -298,6 +302,7 @@ export const BuilderSidebar = ({
             size="sm"
             onClick={addNewStep}
             className="h-8 gap-1 bg-gradient-to-r from-builder-primary to-builder-secondary hover:opacity-90"
+            disabled={!isFormDetailsComplete} // Disable if form details are not complete
           >
             <Plus className="h-3 w-3" />
             Step

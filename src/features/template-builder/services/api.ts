@@ -79,7 +79,24 @@ export const uploadImage = async (file: File, toast: (props: ToastFunctionProps)
 };
 
 // Import types needed for saveForm
-import type { FormData, APIFormData } from '../types/template-builder';
+import type { FormData } from '../types/template-builder';
+
+interface APIFormData {
+  name: string;
+  description: string;
+  category: string;
+  formPayload: string;
+  isActive: boolean;
+  id?: number; // Add optional id field
+}
+
+export const TEMPLATE_CATEGORIES = [
+  "REAL_ESTATE", "EDUCATION", "INSURANCE", "HEALTHCARE", "FINANCE", "ECOMMERCE",
+  "EVENTS", "TRAVEL", "RESTAURANT", "AUTOMOBILE", "BEAUTY_WELLNESS", "LEGAL",
+  "CONSTRUCTION", "NON_PROFIT", "TECHNOLOGY", "HOSPITAL", "GENERIC"
+] as const;
+
+export type TemplateCategory = typeof TEMPLATE_CATEGORIES[number];
 
 interface SaveFormResponse {
   success: boolean;
@@ -129,54 +146,75 @@ export const saveForm = async (formData: FormData, toast: (props: ToastFunctionP
   }
 };
 
-interface AllTemplatesResponse { // Renamed from AllFormsResponse
-  success: boolean;
-  message: string;
-  data: APIFormData[]; // Assuming template data structure is similar to form data
-}
+interface AllTemplatesResponse extends Array<APIFormData> {}
 
 interface CreateTemplateResponse {
   success: boolean;
   message: string;
-  templateId?: string;
+  templateId?: string; // Add templateId to response
 }
 
-export const createTemplate = async (formData: FormData, toast: (props: ToastFunctionProps) => void): Promise<CreateTemplateResponse> => {
+export const saveTemplate = async (formData: FormData, toast: (props: ToastFunctionProps) => void): Promise<CreateTemplateResponse> => {
+  const isUpdate = formData.id !== undefined && formData.id !== null;
+  const endpoint = isUpdate ? `/templates/${formData.id}` : `/templates`;
+  const method = isUpdate ? apiClient.put : apiClient.post;
+
   toast({
-    title: "Creating template...",
-    description: "Please wait while your template is being created.",
+    title: isUpdate ? "Updating template..." : "Creating template...",
+    description: isUpdate ? "Please wait while your template is being updated." : "Please wait while your template is being created.",
   });
 
   try {
+    // Construct the inner formPayload object first
+    const innerFormPayload = {
+      formId: formData.name.toLowerCase().replace(/\s+/g, '-').replace(/-+/g, '-'), // Derive formId from name
+      name: formData.name,
+      description: formData.description,
+      theme: formData.theme || {
+        primaryColor: "#4F46E5",
+        secondaryColor: "#8B5CF6",
+        backgroundColor: "#F9FAFB",
+        textColor: "#1F2937",
+        borderColor: "#D1D5DB",
+        borderRadius: "8px",
+        fontFamily: "Inter, sans-serif",
+        buttonColor: "#4F46E5",
+        buttonTextColor: "#FFFFFF"
+      },
+      steps: formData.steps,
+      settings: formData.settings,
+    };
+
     const apiFormData: APIFormData = {
       name: formData.name,
       description: formData.description,
-      category: "GENERIC", // Changed from "Template" to "GENERIC" to match backend enum
-      formPayload: JSON.stringify({ steps: formData.steps, settings: formData.settings, theme: formData.theme }),
+      category: formData.category,
+      formPayload: JSON.stringify(innerFormPayload), // Stringify the constructed object
       isActive: true, // Default to active
     };
 
-    const response = await apiClient.post<CreateTemplateResponse>(`/templates`, apiFormData);
+    const response = await method<CreateTemplateResponse>(endpoint, apiFormData);
 
     if (response.data.success) {
       toast({
-        title: "Template Created Successfully",
-        description: response.data.message || "Your template has been created.",
+        title: isUpdate ? "Template Updated Successfully" : "Template Created Successfully",
+        description: response.data.message || (isUpdate ? "Your template has been updated." : "Your template has been created."),
       });
       return response.data;
     } else {
+      console.error(isUpdate ? "API response indicated failure for updateTemplate:" : "API response indicated failure for createTemplate:", response.data);
       toast({
-        title: "Template Creation Failed",
-        description: response.data.message || "There was an error creating your template.",
+        title: isUpdate ? "Template Update Failed" : "Template Creation Failed",
+        description: response.data.message || (isUpdate ? "There was an error updating your template." : "There was an error creating your template."),
         variant: "destructive",
       });
-      throw new Error(response.data.message || "Failed to create template");
+      throw new Error(response.data.message || (isUpdate ? "Failed to update template" : "Failed to create template"));
     }
   } catch (error) {
-    console.error('Template creation failed:', error);
+    console.error(isUpdate ? 'Template update failed:' : 'Template creation failed:', error);
     toast({
-      title: "Template Creation Failed",
-      description: "There was an error creating your template.",
+      title: isUpdate ? "Template Update Failed" : "Template Creation Failed",
+      description: "There was an error saving your template.", // Generic message for both create/update
       variant: "destructive",
     });
     throw error;
@@ -185,41 +223,31 @@ export const createTemplate = async (formData: FormData, toast: (props: ToastFun
 
 export const getAllForms = async (toast: (props: ToastFunctionProps) => void): Promise<FormData[]> => {
   try {
-    const response = await apiClient.get<AllTemplatesResponse>(`/templates`); // Changed endpoint to /templates
+    const response = await apiClient.get<AllTemplatesResponse>(`/templates`);
 
-    if (response.data.success) {
-      const parsedTemplates: FormData[] = response.data.data.map(apiForm => {
-        try {
-          const formPayload = JSON.parse(apiForm.formPayload);
-          // Merge top-level properties from APIFormData with parsed payload
-          return { 
-            ...formPayload, 
-            name: apiForm.name, 
-            description: apiForm.description, 
-            formId: (formPayload as any).formId || apiForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') // Ensure formId is present
-          }; // Ensure name and description are correct
-        } catch (parseError) {
-          console.error('Error parsing templatePayload for template:', apiForm.name, parseError);
-          toast({
-            title: 'Data Error',
-            description: `Could not parse template data for "${apiForm.name}".`,
-            variant: 'destructive',
-          });
-          return null; // Return null for invalid templates
-        }
-      }).filter(template => template !== null) as FormData[]; // Filter out nulls and cast
-      
-      return parsedTemplates;
-    } else {
-      toast({
-        title: "Fetch Failed",
-        description: response.data.message || "There was an error fetching your templates.",
-        variant: "destructive",
-      });
-      throw new Error(response.data.message || "Failed to fetch templates");
-    }
+    const parsedTemplates: FormData[] = response.data.map(apiForm => {
+      try {
+        const formPayload = JSON.parse(apiForm.formPayload);
+        return {
+          ...formPayload,
+          name: apiForm.name,
+          description: apiForm.description,
+          formId: (formPayload as any).formId || String(apiForm.id) || apiForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') // Use apiForm.id as fallback for formId
+        };
+      } catch (parseError) {
+        console.error('Error parsing templatePayload for template:', apiForm.name, parseError);
+        toast({
+          title: 'Data Error',
+          description: `Could not parse template data for "${apiForm.name}".`,
+          variant: 'destructive',
+        });
+        return null;
+      }
+    }).filter(template => template !== null) as FormData[];
+
+    return parsedTemplates;
   } catch (error) {
-    console.error('Template fetch failed:', error);
+    console.error('Template fetch failed (catch block):', error);
     toast({
       title: "Fetch Failed",
       description: "There was an error fetching your templates.",
@@ -234,14 +262,14 @@ interface DeleteFormResponse {
   message: string;
 }
 
-export const deleteForm = async (formId: string, toast: (props: ToastFunctionProps) => void): Promise<DeleteFormResponse> => {
+export const deleteForm = async (templateId: string, toast: (props: ToastFunctionProps) => void): Promise<DeleteFormResponse> => {
   toast({
     title: "Deleting template...", // Changed from form
     description: "Please wait while your template is being deleted.", // Changed from form
   });
 
   try {
-    const response = await apiClient.delete<DeleteFormResponse>(`/templates/${formId}`); // Changed endpoint to /templates
+    const response = await apiClient.delete<DeleteFormResponse>(`/templates/${templateId}`); // Changed endpoint to /templates
 
     if (response.data.success) {
       toast({

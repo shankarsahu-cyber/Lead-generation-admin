@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import { getMerchantDetails, Merchant, getMerchantSubscriptions, Subscription } from '../services/api';
+import { getMerchantDetails, Merchant, getMerchantSubscriptions, Subscription, updateSubscriptionStatus, forceActivateSubscription } from '../services/api';
 import { Pencil } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const MerchantDetailsPage: React.FC = () => {
   const { merchantId } = useParams<{ merchantId: string }>();
@@ -17,6 +18,8 @@ const MerchantDetailsPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loadingSubscriptions, setLoadingSubscriptions] = useState<boolean>(true);
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const [isForceActivateDialogOpen, setIsForceActivateDialogOpen] = useState<boolean>(false);
+  const [subscriptionToForceActivate, setSubscriptionToForceActivate] = useState<string | null>(null);
 
   useEffect(() => {
     if (merchantId) {
@@ -49,7 +52,20 @@ const MerchantDetailsPage: React.FC = () => {
       const fetchSubscriptions = async () => {
         try {
           const data = await getMerchantSubscriptions(merchantId);
-          setSubscriptions(data);
+
+          const isExpired = (sub: Subscription) => new Date(sub.endDate) < new Date();
+
+          // Sort subscriptions: Active first, then Pending, then Expired, then others
+          const sortedSubscriptions = data.sort((a, b) => {
+            const getStatusPriority = (sub: Subscription) => {
+              if (sub.status === 'ACTIVE' && !isExpired(sub)) return 1; // Truly active
+              if (sub.status === 'PENDING') return 2;
+              if (isExpired(sub)) return 3; // Explicitly expired
+              return 4; // Other statuses (INACTIVE, CANCELLED, or active but expired)
+            };
+            return getStatusPriority(a) - getStatusPriority(b);
+          });
+          setSubscriptions(sortedSubscriptions);
         } catch (err) {
           console.error("Failed to fetch merchant subscriptions:", err);
           setSubscriptionError("Failed to load subscriptions.");
@@ -66,14 +82,21 @@ const MerchantDetailsPage: React.FC = () => {
     }
   }, [merchantId, toast]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
+  const getStatusColor = (status: Subscription['status'], endDate: string) => {
+    const isSubscriptionExpired = new Date(endDate) < new Date();
+
+    if (isSubscriptionExpired) { // Explicitly mark as expired (red)
+      return 'destructive';
+    }
+
+    switch (status.toLowerCase()) {
       case 'active':
-        return 'success';
-      case 'inactive':
-        return 'destructive';
+        return 'success'; // Green
       case 'pending':
-        return 'warning';
+        return 'warning'; // Orange
+      case 'inactive':
+      case 'cancelled':
+        return 'destructive'; // Red
       default:
         return 'secondary';
     }
@@ -89,6 +112,37 @@ const MerchantDetailsPage: React.FC = () => {
         return 'outline';
       default:
         return 'outline';
+    }
+  };
+
+  const handleForceActivate = (subscriptionId: string) => {
+    setSubscriptionToForceActivate(subscriptionId);
+    setIsForceActivateDialogOpen(true);
+  };
+
+  const confirmForceActivate = async () => {
+    if (!merchantId || !subscriptionToForceActivate) return;
+    setLoadingSubscriptions(true);
+    try {
+      await forceActivateSubscription(subscriptionToForceActivate, merchantId, "NULL");
+      // Refresh subscriptions after update
+      const updatedSubscriptions = await getMerchantSubscriptions(merchantId);
+      setSubscriptions(updatedSubscriptions);
+      toast({
+        title: "Subscription Activated",
+        description: "Subscription has been force activated.",
+      });
+    } catch (err) {
+      console.error("Failed to force activate subscription:", err);
+      toast({
+        title: "Error",
+        description: "Failed to force activate subscription. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingSubscriptions(false);
+      setIsForceActivateDialogOpen(false); // Close the dialog
+      setSubscriptionToForceActivate(null); // Clear the selected subscription
     }
   };
 
@@ -169,9 +223,19 @@ const MerchantDetailsPage: React.FC = () => {
                     <CardTitle className="text-lg">Subscription Type: {sub.planName}</CardTitle>
                   </CardHeader>
                   <CardContent className="text-sm space-y-2">
-                    <p><span className="font-medium">Status:</span> <Badge variant={sub.status === 'ACTIVE' ? 'default' : 'destructive'}>{sub.status}</Badge></p>
+                    <div><span className="font-medium">Status:</span> <Badge variant={getStatusColor(sub.status, sub.endDate)}>{sub.status}</Badge></div>
                     <p><span className="font-medium">Start Date:</span> {new Date(sub.startDate).toLocaleDateString()}</p>
                     {sub.endDate && <p><span className="font-medium">End Date:</span> {new Date(sub.endDate).toLocaleDateString()}</p>}
+                    {sub.status === 'PENDING' && (
+                      <div className="flex justify-end mt-2">
+                        <Button
+                          className="text-xs px-2 py-1"
+                          onClick={() => handleForceActivate(sub.id)}
+                        >
+                          Force Activate
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -179,6 +243,23 @@ const MerchantDetailsPage: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={isForceActivateDialogOpen} onOpenChange={setIsForceActivateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Force Activation</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to force activate this subscription? It will expire the current active plan and all other attached add-ons plans.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmForceActivate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Force Activate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
