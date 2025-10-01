@@ -6,6 +6,7 @@ import { ScrollArea } from '../ui/scroll-area';
 import { Badge } from '../ui/badge';
 import { Trash2, FolderOpen, Plus, Eye, FileText, Calendar, Users, Settings } from 'lucide-react';
 
+
 interface SavedForm extends FormData {
   formId: string;
   savedAt: string;
@@ -227,7 +228,7 @@ export const FormDashboard = ({
                         size="sm" 
                         onClick={(e) => {
                           e.stopPropagation();
-                          // API call completely removed, button does nothing now.
+                          onLoadForm(form.formId);
                         }}
                         className="flex-1 gap-2 border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
                       >

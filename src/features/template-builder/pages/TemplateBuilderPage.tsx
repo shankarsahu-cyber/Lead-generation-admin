@@ -140,9 +140,9 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       if (onSave) {
         await onSave(formToSave);
         toast({
-          title: "Form Saved",
+          title: "Form Saved Successfully! 🎉",
           description: `Form "${currentFormData.name}" saved successfully via parent handler!`,
-          variant: "default",
+          variant: "success",
         });
         return;
       }
@@ -622,7 +622,11 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
     <div className="h-screen flex flex-col bg-background">
       <BuilderHeader
         formName={formData.name}
+        formDescription={formData.description}
+        formCategory={formData.category}
         onFormNameChange={(name) => setFormData({ ...formData, name })}
+        onFormDescriptionChange={(description) => setFormData({ ...formData, description })}
+        onFormCategoryChange={(category) => setFormData({ ...formData, category })}
         onImportJSON={handleImportJSON}
         onExportJSON={handleExportJSON}
         onPreview={() => setIsPreviewOpen(true)}

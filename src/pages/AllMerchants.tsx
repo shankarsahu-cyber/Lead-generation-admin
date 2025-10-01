@@ -335,25 +335,25 @@ const AllMerchants: React.FC = () => {
   // Removed useEffect related to merchant details dialog
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">All Merchants</h1>
-        <p className="text-muted-foreground">Manage and monitor all merchant accounts</p>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="px-1">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">All Merchants</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">Manage and monitor all merchant accounts</p>
       </div>
 
       {/* Search and Stats */}
-      <div className="grid gap-6 md:grid-cols-2"> {/* Adjusted to 2 columns */}
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
         <Card className="border border-border">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">
               {allMerchantsForStats.filter(m => m.status === 'ACTIVE').length}
             </div>
             <p className="text-xs text-muted-foreground">Active Merchants</p>
           </CardContent>
         </Card>
         <Card className="border border-border">
-          <CardContent className="p-6">
-            <div className="text-2xl font-bold text-foreground">
+          <CardContent className="p-4 sm:p-6">
+            <div className="text-xl sm:text-2xl font-bold text-foreground">
               {allMerchantsForStats.filter(m => m.status === 'PENDING').length}
             </div>
             <p className="text-xs text-muted-foreground">Pending Approval</p>
@@ -362,21 +362,164 @@ const AllMerchants: React.FC = () => {
       </div>
 
       <Card className="border border-border">
-        <CardHeader>
-          <CardTitle>Merchant Directory</CardTitle>
-          <CardDescription>View and manage all merchant accounts</CardDescription>
-          <div className="relative max-w-sm">
+        <CardHeader className="p-4 sm:p-6">
+          <CardTitle className="text-lg sm:text-xl">Merchant Directory</CardTitle>
+          <CardDescription className="text-sm">View and manage all merchant accounts</CardDescription>
+          <div className="relative w-full sm:max-w-sm">
             <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search merchants..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
+              className="pl-8 text-sm"
             />
           </div>
         </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-border overflow-x-auto">
+        <CardContent className="p-0 sm:p-6 sm:pt-0">
+          {/* Mobile Card Layout */}
+          <div className="block sm:hidden space-y-4 p-4">
+            {loading ? (
+              <div className="text-center py-8">Loading merchants...</div>
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">Error: {error}</div>
+            ) : merchants.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">No merchants found.</div>
+            ) : (
+              filteredMerchants.map((merchant) => (
+                <Card key={merchant.id} className="border border-border">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div>
+                        <div className="font-medium text-foreground text-sm">{merchant.companyName}</div>
+                        <div className="text-xs text-muted-foreground">{merchant.email}</div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant={getStatusColor(merchant.status) as any} className="text-xs">
+                          {merchant.status}
+                        </Badge>
+                        <Badge variant={getPlanColor(merchant.activePlanName || '')} className="text-xs">
+                          {merchant.activePlanName || 'N/A'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={() => navigate(`/merchants/${merchant.id}`)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8"
+                              onClick={() => setSelectedMerchant(merchant)}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[95vw] max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg">Update Merchant Status</DialogTitle>
+                              <DialogDescription className="text-sm">
+                                Change the status for {selectedMerchant?.companyName}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">Current Status</label>
+                                <p className="text-sm text-muted-foreground">
+                                  {selectedMerchant?.status}
+                                </p>
+                              </div>
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">New Status</label>
+                                <Select value={newStatus} onValueChange={setNewStatus}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select status" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="PENDING">Pending</SelectItem>
+                                    <SelectItem value="ACTIVE">Active</SelectItem>
+                                    <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button onClick={handleStatusUpdate} className="w-full">
+                                Update Status
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Dialog open={isAssignPlanDialogOpen} onOpenChange={setIsAssignPlanDialogOpen}>
+                          <DialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-8"
+                              onClick={() => handleOpenAssignPlanDialog(merchant)}
+                            >
+                              Plan
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="w-[95vw] max-w-md">
+                            <DialogHeader>
+                              <DialogTitle className="text-lg">Assign Plan</DialogTitle>
+                              <DialogDescription className="text-sm">
+                                Select a new plan for {selectedMerchant?.companyName}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                              <div className="space-y-2">
+                                <label className="text-sm font-medium">Select New Plan</label>
+                                <Select
+                                  value={selectedPlanId || ''}
+                                  onValueChange={(value) => setSelectedPlanId(value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select a plan" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {regularPlans.map((planItem) => (
+                                      <SelectItem key={planItem.id} value={planItem.id}>
+                                        {planItem.name} - ${planItem.price}/{planItem.billingCycle.toLowerCase()}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <Button onClick={handleAssignPlan} className="w-full">
+                                Assign Plan
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={() => handleOpenVoucherDialog(merchant)}
+                        >
+                          Voucher
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+
+          {/* Desktop Table Layout */}
+          <div className="hidden sm:block rounded-md border border-border overflow-x-auto">
             {loading ? (
               <div className="text-center py-8">Loading merchants...</div>
             ) : error ? (
@@ -387,7 +530,10 @@ const AllMerchants: React.FC = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Merchant</TableHead><TableHead>Status</TableHead><TableHead>Plan</TableHead><TableHead>Actions</TableHead>
+                    <TableHead className="min-w-[200px]">Merchant</TableHead>
+                    <TableHead className="min-w-[100px]">Status</TableHead>
+                    <TableHead className="min-w-[120px]">Plan</TableHead>
+                    <TableHead className="min-w-[200px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -398,20 +544,23 @@ const AllMerchants: React.FC = () => {
                           <div className="font-medium text-foreground">{merchant.companyName}</div>
                           <div className="text-sm text-muted-foreground">{merchant.email}</div>
                         </div>
-                      </TableCell><TableCell>
+                      </TableCell>
+                      <TableCell>
                         <Badge variant={getStatusColor(merchant.status) as any}>
                           {merchant.status}
                         </Badge>
-                      </TableCell><TableCell>
-                        <Badge variant={getPlanColor(merchant.activePlanName || '')}>{merchant.activePlanName || 'N/A'}</Badge>
-                      </TableCell><TableCell>
-                        <div className="flex items-center gap-2">
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getPlanColor(merchant.activePlanName || '')}>
+                          {merchant.activePlanName || 'N/A'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {
-                              navigate(`/merchants/${merchant.id}`);
-                            }}
+                            onClick={() => navigate(`/merchants/${merchant.id}`)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -425,7 +574,7 @@ const AllMerchants: React.FC = () => {
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="w-[95vw] max-w-md">
                               <DialogHeader>
                                 <DialogTitle>Update Merchant Status</DialogTitle>
                                 <DialogDescription>
@@ -459,7 +608,6 @@ const AllMerchants: React.FC = () => {
                               </div>
                             </DialogContent>
                           </Dialog>
-                          {/* Assign Plan Dialog Trigger */}
                           <Dialog open={isAssignPlanDialogOpen} onOpenChange={setIsAssignPlanDialogOpen}>
                             <DialogTrigger asChild>
                               <Button
@@ -470,7 +618,7 @@ const AllMerchants: React.FC = () => {
                                 Assign Plan
                               </Button>
                             </DialogTrigger>
-                            <DialogContent>
+                            <DialogContent className="w-[95vw] max-w-md">
                               <DialogHeader>
                                 <DialogTitle>Assign Plan to {selectedMerchant?.companyName}</DialogTitle>
                                 <DialogDescription>
@@ -517,43 +665,54 @@ const AllMerchants: React.FC = () => {
               </Table>
             )}
           </div>
+          
+          {/* Pagination */}
           {totalPages > 1 && (
-            <Pagination className="mt-4">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious
-                    onClick={() => handlePageChange(page - 1)}
-                    className={page === 0 ? "pointer-events-none opacity-50" : undefined}
-                  />
-                </PaginationItem>
-                {[...Array(totalPages)].map((_, i) => (
-                  <PaginationItem key={i}>
-                    <PaginationLink
-                      onClick={() => handlePageChange(i)}
-                      isActive={i === page}
-                    >
-                      {i + 1}
-                    </PaginationLink>
+            <div className="mt-4 px-4 sm:px-0">
+              <Pagination className="justify-center">
+                <PaginationContent className="flex-wrap gap-1">
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => handlePageChange(page - 1)}
+                      className={`text-xs sm:text-sm ${page === 0 ? "pointer-events-none opacity-50" : ""}`}
+                    />
                   </PaginationItem>
-                ))}
-                <PaginationItem>
-                  <PaginationNext
-                    onClick={() => handlePageChange(page + 1)}
-                    className={page === totalPages - 1 ? "pointer-events-none opacity-50" : undefined}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
+                  {[...Array(Math.min(totalPages, 5))].map((_, i) => {
+                    const pageNum = totalPages <= 5 ? i : 
+                      page < 3 ? i : 
+                      page > totalPages - 3 ? totalPages - 5 + i : 
+                      page - 2 + i;
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(pageNum)}
+                          isActive={pageNum === page}
+                          className="text-xs sm:text-sm min-w-[32px] h-8 sm:h-10"
+                        >
+                          {pageNum + 1}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => handlePageChange(page + 1)}
+                      className={`text-xs sm:text-sm ${page === totalPages - 1 ? "pointer-events-none opacity-50" : ""}`}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
           )}
         </CardContent>
       </Card>
 
       {/* Voucher Plan Dialog */}
       <Dialog open={isVoucherDialogOpen} onOpenChange={setIsVoucherDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-md">
           <DialogHeader>
-            <DialogTitle>Assign Voucher</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Assign Voucher</DialogTitle>
+            <DialogDescription className="text-sm">
               Select a voucher plan for {selectedMerchant?.companyName}
             </DialogDescription>
           </DialogHeader>
@@ -582,7 +741,6 @@ const AllMerchants: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
-      {/* Removed Merchant Details Dialog */}
     </div>
   );
 };

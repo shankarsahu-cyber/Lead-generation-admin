@@ -75,7 +75,7 @@ export interface FormData {
 export interface APIFormData {
   name: string;
   description: string;
-  category: string;
+  category: number; // Changed to number for backend compatibility
   formPayload: string;
   isActive: boolean;
 }

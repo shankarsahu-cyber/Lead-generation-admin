@@ -52,19 +52,8 @@ const MerchantDetailsPage: React.FC = () => {
       const fetchSubscriptions = async () => {
         try {
           const data = await getMerchantSubscriptions(merchantId);
-
-          const isExpired = (sub: Subscription) => new Date(sub.endDate) < new Date();
-
-          // Sort subscriptions: Active first, then Pending, then Expired, then others
-          const sortedSubscriptions = data.sort((a, b) => {
-            const getStatusPriority = (sub: Subscription) => {
-              if (sub.status === 'ACTIVE' && !isExpired(sub)) return 1; // Truly active
-              if (sub.status === 'PENDING') return 2;
-              if (isExpired(sub)) return 3; // Explicitly expired
-              return 4; // Other statuses (INACTIVE, CANCELLED, or active but expired)
-            };
-            return getStatusPriority(a) - getStatusPriority(b);
-          });
+          // Use helper function for consistent sorting
+          const sortedSubscriptions = sortSubscriptions(data);
           setSubscriptions(sortedSubscriptions);
         } catch (err) {
           console.error("Failed to fetch merchant subscriptions:", err);
@@ -115,6 +104,31 @@ const MerchantDetailsPage: React.FC = () => {
     }
   };
 
+  // Helper function for consistent subscription sorting
+  const sortSubscriptions = (subscriptions: Subscription[]) => {
+    const isExpired = (sub: Subscription) => new Date(sub.endDate) < new Date();
+    
+    return subscriptions.sort((a, b) => {
+      const getStatusPriority = (sub: Subscription) => {
+        // Check if subscription is truly active (status ACTIVE and not expired)
+        if (sub.status === 'ACTIVE' && !isExpired(sub)) return 1; // Active plans first
+        if (sub.status === 'PENDING') return 2; // Pending plans second
+        if (isExpired(sub) || sub.status === 'EXPIRED') return 3; // Expired plans last
+        return 4; // Other statuses (INACTIVE, CANCELLED, etc.)
+      };
+      
+      const priorityA = getStatusPriority(a);
+      const priorityB = getStatusPriority(b);
+      
+      // If same priority, sort by start date (newest first)
+      if (priorityA === priorityB) {
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      }
+      
+      return priorityA - priorityB;
+    });
+  };
+
   const handleForceActivate = (subscriptionId: string) => {
     setSubscriptionToForceActivate(subscriptionId);
     setIsForceActivateDialogOpen(true);
@@ -125,12 +139,14 @@ const MerchantDetailsPage: React.FC = () => {
     setLoadingSubscriptions(true);
     try {
       await forceActivateSubscription(subscriptionToForceActivate, merchantId, "NULL");
-      // Refresh subscriptions after update
+      // Refresh subscriptions after update with consistent sorting
       const updatedSubscriptions = await getMerchantSubscriptions(merchantId);
-      setSubscriptions(updatedSubscriptions);
+      const sortedUpdatedSubscriptions = sortSubscriptions(updatedSubscriptions);
+      setSubscriptions(sortedUpdatedSubscriptions);
       toast({
-        title: "Subscription Activated",
-        description: "Subscription has been force activated.",
+        title: "Subscription Activated! 🎉",
+        description: "Subscription has been force activated successfully!",
+        variant: "success",
       });
     } catch (err) {
       console.error("Failed to force activate subscription:", err);

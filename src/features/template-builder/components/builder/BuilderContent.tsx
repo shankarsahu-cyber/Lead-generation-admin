@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { FormData, FormStep, FormField, FieldType } from '../../types/form-builder';
+import { FormData, FormStep, FormField, FieldType } from '../../types/template-builder';
+import { updateTemplate } from '../../services/api';
+import { useToast } from '@/hooks/use-toast';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -19,9 +21,9 @@ import {
   Circle,
   Edit,
   Trash2,
-  ChevronLeft
+  ChevronLeft,
+  Save
 } from 'lucide-react';
-import { ImageUpload } from './ImageUpload'; // Import the new ImageUpload component
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -35,7 +37,8 @@ interface BuilderContentProps {
   onFormDataChange: (data: FormData) => void;
   onFieldSelect: (fieldPath: string[]) => void;
   onStepSelect: (stepId: string) => void;
-  isFormDetailsComplete: boolean; // New prop
+  isFormDetailsComplete: boolean;
+  onNavigateToMyForms?: () => void;
 }
 
 const fieldTypeIcons: Record<FieldType, React.ComponentType<{ className?: string }>> = {
@@ -71,10 +74,32 @@ export const BuilderContent = ({
   onFormDataChange,
   onFieldSelect,
   onStepSelect,
-  isFormDetailsComplete // Destructure new prop
+  isFormDetailsComplete,
+  onNavigateToMyForms
 }: BuilderContentProps) => {
   const [editingField, setEditingField] = useState<string | null>(null);
   const [currentFormValues, setCurrentFormValues] = useState<Record<string, any>>({});
+  const { toast } = useToast();
+
+  const handleUpdateTemplate = async () => {
+    if (!formData.id) {
+      toast({
+        title: "Update Failed",
+        description: "Template ID is missing. Please save the template first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await updateTemplate(formData.id, formData, toast);
+      if (result.success && onNavigateToMyForms) {
+        onNavigateToMyForms();
+      }
+    } catch (error) {
+      console.error('Failed to update template:', error);
+    }
+  };
 
   const handleFieldChange = (fieldId: string, value: any) => {
     setCurrentFormValues(prev => ({
@@ -82,7 +107,6 @@ export const BuilderContent = ({
       [fieldId]: value
     }));
 
-    // Check for next step condition on the current step
     if (step && step.nextStepCondition) {
       for (const condition of step.nextStepCondition) {
         if (currentFormValues[condition.fieldId] === condition.value) {
@@ -92,8 +116,7 @@ export const BuilderContent = ({
       }
     }
 
-    // Check for next step condition on options within the current field
-    const currentField = getNestedField(step.fields, [...selectedFieldPath, fieldId]);
+    const currentField = getNestedField(step?.fields || [], [...selectedFieldPath, fieldId]);
     if (currentField && currentField.options) {
       const selectedOption = currentField.options.find(option => option.value === value);
       if (selectedOption && selectedOption.nextStepId) {
@@ -105,9 +128,9 @@ export const BuilderContent = ({
 
   if (!step) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-muted/20">
-        <div className="text-center">
-          <h3 className="text-lg font-medium text-muted-foreground mb-2">No Step Selected</h3>
+      <div className="flex-1 flex items-center justify-center bg-muted/20 p-4">
+        <div className="text-center max-w-md mx-auto">
+          <h3 className="text-lg sm:text-xl font-medium text-muted-foreground mb-2">No Step Selected</h3>
           <p className="text-sm text-muted-foreground">Select a step from the sidebar to view its fields</p>
         </div>
       </div>
@@ -134,9 +157,8 @@ export const BuilderContent = ({
     return parentField?.subFields || [];
   };
 
-  // Helper to recursively update a field or subfield
   const updateFieldRecursive = (fields: FormField[], path: string[], updateFn: (field: FormField) => FormField): FormField[] => {
-    if (path.length === 0) return fields; // Should not happen for a targeted update
+    if (path.length === 0) return fields;
 
     return fields.map(field => {
       if (field.fieldId === path[0]) {
@@ -153,7 +175,6 @@ export const BuilderContent = ({
     });
   };
 
-  // Helper to add a new field at a specific path, or as a subfield to a given parent ID
   const addNewFieldToPath = (path: string[], type: FieldType) => {
     const newFieldId = `field_${Date.now()}`;
     const newField: FormField = {
@@ -165,8 +186,7 @@ export const BuilderContent = ({
       ...(type === 'dropdown' || type === 'checkboxes' || type === 'radio'
         ? { options: [] } 
         : {}),
-      ...(type === 'image_upload' ? { imageUrl: '' } : {}),
-      ...(type === 'image_upload' ? { imageName: '' } : {}),
+      ...(type === 'image_upload' ? { imageUrl: '', imageName: '' } : {}),
     };
 
     const updateFieldsRecursive = (currentFields: FormField[], targetPath: string[]): FormField[] => {
@@ -200,7 +220,7 @@ export const BuilderContent = ({
   };
 
   const addNewField = (type: FieldType) => {
-    addNewFieldToPath(selectedFieldPath, type); // Add to the current selected path
+    addNewFieldToPath(selectedFieldPath, type);
   };
 
   const deleteField = (fieldId: string) => {
@@ -240,76 +260,150 @@ export const BuilderContent = ({
     onFormDataChange(updatedFormData);
   };
 
+  const getFieldById = (fields: FormField[], fieldId: string): FormField | null => {
+    for (const field of fields) {
+      if (field.fieldId === fieldId) return field;
+      const found = getFieldById(field.subFields, fieldId);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const handleUpdateField = (fieldId: string, updatedField: FormField) => {
+    const updateFields = (fields: FormField[]): FormField[] => {
+      return fields.map(field => {
+        if (field.fieldId === fieldId) {
+          return updatedField;
+        }
+        return {
+          ...field,
+          subFields: updateFields(field.subFields)
+        };
+      });
+    };
+
+    const updatedStep = {
+      ...step,
+      fields: updateFields(step.fields)
+    };
+
+    const updatedFormData = {
+      ...formData,
+      steps: formData.steps.map(s => s.stepId === step.stepId ? updatedStep : s)
+    };
+
+    onFormDataChange(updatedFormData);
+  };
+
+  const handleDeleteField = (fieldId: string) => {
+    deleteField(fieldId);
+  };
+
+  const handleAddField = (type: FieldType) => {
+    addNewField(type);
+  };
+
+  const handleAddSubfield = (parentFieldId: string, type: FieldType) => {
+    addNewFieldToPath([...selectedFieldPath, parentFieldId], type);
+  };
+
   const currentFields = getCurrentFields();
   const breadcrumb = selectedFieldPath.length > 0 
     ? ` > ${selectedFieldPath.map(id => getNestedField(step.fields, [id])?.label || id).join(' > ')}`
     : '';
 
   return (
-    <div className="flex-1 flex flex-col bg-background">
-      <div className="p-4 md:p-6 border-b bg-card">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg md:text-xl font-semibold text-foreground truncate max-w-[calc(100vw-120px)] md:max-w-none">{step.title}{breadcrumb}</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              {currentFields.length} field{currentFields.length !== 1 ? 's' : ''}
+    <div className="flex-1 flex flex-col h-full bg-background">
+      {/* Header */}
+      <div className="p-3 sm:p-4 lg:p-6 border-b border-border bg-muted/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-base sm:text-lg lg:text-xl font-semibold text-foreground truncate">
+              {step.title}{breadcrumb}
+            </h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+              {currentFields.length} field{currentFields.length !== 1 ? 's' : ''} in this step
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             {selectedFieldPath.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => onFieldSelect(selectedFieldPath.slice(0, -1))}
-                className="gap-1"
+                className="h-8 px-3 text-xs w-full sm:w-auto"
               >
-                <ChevronLeft className="h-4 w-4" />
-                Back
+                <ChevronLeft className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Back</span>
+                <span className="sm:hidden">Back</span>
               </Button>
             )}
-            <FieldTypeDropdown onSelectType={addNewField} disabled={!isFormDetailsComplete} />
+            {formData.id && (
+              <Button
+                onClick={handleUpdateTemplate}
+                variant="outline"
+                size="sm"
+                className="h-8 px-3 text-xs w-full sm:w-auto"
+              >
+                <Save className="h-3 w-3 mr-1" />
+                <span className="hidden sm:inline">Update Template</span>
+                <span className="sm:hidden">Update</span>
+              </Button>
+            )}
+            <FieldTypeDropdown
+              onSelectType={handleAddField}
+              disabled={!isFormDetailsComplete}
+            />
           </div>
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 md:p-6">
-          {currentFields.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="mx-auto w-12 h-12 bg-muted rounded-lg flex items-center justify-center mb-4">
-                <Plus className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-medium text-foreground mb-2">No Fields Yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Add your first field to start building your form
-              </p>
-              <FieldTypeDropdown onSelectType={addNewField} disabled={!isFormDetailsComplete} />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentFields.map((field) => (
-                <FieldCard
-                  key={field.fieldId}
-                  field={field}
-                  onEdit={() => setEditingField(field.fieldId)}
-                  onDelete={() => deleteField(field.fieldId)}
-                  onSelect={() => onFieldSelect([...selectedFieldPath, field.fieldId])}
-                  updateFieldRecursive={updateFieldRecursive}
-                  currentStep={step}
-                  formData={formData}
-                  selectedFieldPath={selectedFieldPath}
-                  onFormDataChange={onFormDataChange}
-                  onAddSubfield={(parentFieldId, type) => addNewFieldToPath([...selectedFieldPath, parentFieldId], type)}
-                  handleFieldChange={handleFieldChange}
-                  onValueChange={handleFieldChange} // Pass handleFieldChange to onValueChange
-                  isFormDetailsComplete={isFormDetailsComplete} // Pass the new prop
+      {/* Content */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          <div className="p-3 sm:p-4 lg:p-6">
+            {currentFields.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 sm:py-12 text-center">
+                <div className="w-12 sm:w-16 h-12 sm:h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                  <Plus className="h-6 sm:h-8 w-6 sm:w-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No Fields Yet</h3>
+                <p className="text-sm text-muted-foreground mb-4 max-w-md px-4">
+                  Add your first field to start building your form
+                </p>
+                <FieldTypeDropdown
+                  onSelectType={handleAddField}
+                  disabled={!isFormDetailsComplete}
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                {currentFields.map((field) => (
+                  <FieldCard
+                    key={field.fieldId}
+                    field={field}
+                    onEdit={() => setEditingField(field.fieldId)}
+                    onDelete={() => handleDeleteField(field.fieldId)}
+                    onSelect={() => onFieldSelect([...selectedFieldPath, field.fieldId])}
+                    updateFieldRecursive={updateFieldRecursive}
+                    currentStep={step}
+                    formData={formData}
+                    selectedFieldPath={selectedFieldPath}
+                    onFormDataChange={onFormDataChange}
+                    onAddSubfield={handleAddSubfield}
+                    handleFieldChange={handleFieldChange}
+                    onValueChange={handleFieldChange}
+                    isFormDetailsComplete={isFormDetailsComplete}
+                    currentFormValues={currentFormValues}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
 
+      {/* Field Editor Modal */}
       {editingField && (
         <FieldEditor
           fieldId={editingField}
@@ -318,8 +412,8 @@ export const BuilderContent = ({
           selectedFieldPath={selectedFieldPath}
           onClose={() => setEditingField(null)}
           onSave={onFormDataChange}
-          onFieldSelect={onFieldSelect} // Pass onFieldSelect
-          allSteps={formData.steps} // Pass all steps
+          onFieldSelect={onFieldSelect}
+          allSteps={formData.steps}
         />
       )}
     </div>
@@ -328,7 +422,7 @@ export const BuilderContent = ({
 
 const FieldTypeDropdown = ({
   onSelectType,
-  disabled // Add disabled prop here
+  disabled
 }: { onSelectType: (type: FieldType) => void; disabled?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -342,17 +436,19 @@ const FieldTypeDropdown = ({
     <div className="relative">
       <Button
         onClick={() => setIsOpen(!isOpen)}
-        className="gap-2 bg-gradient-to-r from-builder-primary to-builder-secondary hover:opacity-90"
-        disabled={disabled} // Apply disabled prop to the button
+        className="gap-1 sm:gap-2 bg-gradient-to-r from-builder-primary to-builder-secondary hover:opacity-90 text-xs sm:text-sm w-full sm:w-auto"
+        size="sm"
+        disabled={disabled}
       >
-        <Plus className="h-4 w-4" />
-        Add Field
+        <Plus className="h-3 sm:h-4 w-3 sm:w-4" />
+        <span className="hidden sm:inline">Add Field</span>
+        <span className="sm:hidden">Add</span>
       </Button>
       
       {isOpen && (
-        <div className="absolute top-full right-0 mt-2 bg-card border rounded-lg shadow-lg z-50 w-max">
+        <div className="absolute top-full right-0 mt-2 bg-card border rounded-lg shadow-lg z-50 w-64 sm:w-max">
           <div className="p-2">
-            <div className="grid grid-cols-2 gap-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
               {fieldTypes.map((type) => {
                 const Icon = fieldTypeIcons[type];
                 return (
@@ -360,15 +456,15 @@ const FieldTypeDropdown = ({
                     key={type}
                     variant="ghost"
                     size="sm"
-                    className="justify-start gap-2 h-auto p-2"
+                    className="justify-start gap-2 h-auto p-2 text-xs sm:text-sm"
                     onClick={() => {
                       onSelectType(type);
                       setIsOpen(false);
                     }}
-                    disabled={disabled} // Apply disabled prop to dropdown items
+                    disabled={disabled}
                   >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-xs truncate">{fieldTypeLabels[type]}</span>
+                    <Icon className="h-3 sm:h-4 w-3 sm:w-4" />
+                    <span className="truncate">{fieldTypeLabels[type]}</span>
                   </Button>
                 );
               })}
@@ -399,8 +495,9 @@ interface FieldCardProps {
   onFormDataChange: (data: FormData) => void;
   onAddSubfield: (parentFieldId: string, type: FieldType) => void;
   handleFieldChange: (fieldId: string, value: any) => void;
-  onValueChange: (fieldId: string, value: any) => void; // Add this line
-  isFormDetailsComplete: boolean; // New prop
+  onValueChange: (fieldId: string, value: any) => void;
+  isFormDetailsComplete: boolean;
+  currentFormValues: Record<string, any>;
 }
 
 const FieldCard = ({
@@ -408,36 +505,31 @@ const FieldCard = ({
   onEdit,
   onDelete,
   onSelect,
-  updateFieldRecursive,
-  currentStep,
-  formData,
-  selectedFieldPath,
-  onFormDataChange,
   onAddSubfield,
-  handleFieldChange,
   onValueChange,
-  isFormDetailsComplete // Destructure new prop
+  isFormDetailsComplete,
+  currentFormValues
 }: FieldCardProps) => {
   const Icon = fieldTypeIcons[field.type];
   
-  // Special handling for image upload fields - keep their current appearance
+  // Special handling for image upload fields
   if (field.type === 'image_upload') {
     return (
       <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-        <CardHeader className="pb-3">
+        <CardHeader className="pb-3 p-3 sm:p-6">
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               {field.imageUrl ? (
-                <div className="relative w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border">
+                <div className="relative w-12 sm:w-16 h-12 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden border">
                   <img src={field.imageUrl} alt={field.imageName || field.label} className="w-full h-full object-cover" />
                 </div>
               ) : (
                 <div className="p-2 bg-primary/10 rounded-lg">
-                  <Icon className="h-4 w-4 text-primary" />
+                  <Icon className="h-3 sm:h-4 w-3 sm:w-4 text-primary" />
                 </div>
               )}
               <div className="min-w-0 flex-1">
-                <CardTitle className="text-sm font-medium truncate">{field.label}</CardTitle>
+                <CardTitle className="text-sm sm:text-base font-medium truncate">{field.label}</CardTitle>
                 <p className="text-xs text-muted-foreground">{fieldTypeLabels[field.type]}</p>
               </div>
             </div>
@@ -450,7 +542,7 @@ const FieldCard = ({
                   e.stopPropagation();
                   onEdit();
                 }}
-                disabled={!isFormDetailsComplete} // Disable if form details are not complete
+                disabled={!isFormDetailsComplete}
               >
                 <Edit className="h-3 w-3" />
               </Button>
@@ -462,21 +554,21 @@ const FieldCard = ({
                   e.stopPropagation();
                   onDelete();
                 }}
-                disabled={!isFormDetailsComplete} // Disable if form details are not complete
+                disabled={!isFormDetailsComplete}
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
           </div>
           {field.imageUrl && (
-            <div className="mt-3 relative w-full h-48 rounded-md overflow-hidden border">
+            <div className="mt-3 relative w-full h-32 sm:h-48 rounded-md overflow-hidden border">
               <img
                 src={field.imageUrl}
                 alt={field.imageName || field.label}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-                <CardTitle className="text-white text-lg font-semibold truncate">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-2 sm:p-3">
+                <CardTitle className="text-white text-sm sm:text-lg font-semibold truncate">
                   {field.imageName || field.label}
                 </CardTitle>
               </div>
@@ -484,9 +576,9 @@ const FieldCard = ({
           )}
         </CardHeader>
         
-        <CardContent className="pt-0" onClick={onSelect}>
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1">
+        <CardContent className="pt-0 p-3 sm:p-6" onClick={onSelect}>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex gap-1 flex-wrap">
               {field.required && (
                 <Badge variant="secondary" className="text-xs">Required</Badge>
               )}
@@ -506,15 +598,15 @@ const FieldCard = ({
   // Consistent card layout for all other field types
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 p-3 sm:p-6">
         <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3 flex-1">
-            <div className="p-3 bg-primary/10 rounded-lg">
-              <Icon className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-lg">
+              <Icon className="h-4 sm:h-5 w-4 sm:w-5 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
-              <CardTitle className="text-base font-medium truncate">{field.label}</CardTitle>
-              <p className="text-sm text-muted-foreground">{fieldTypeLabels[field.type]}</p>
+              <CardTitle className="text-sm sm:text-base font-medium truncate">{field.label}</CardTitle>
+              <p className="text-xs sm:text-sm text-muted-foreground">{fieldTypeLabels[field.type]}</p>
               {field.placeholder && (
                 <p className="text-xs text-muted-foreground/70 mt-1 truncate">
                   Placeholder: {field.placeholder}
@@ -526,34 +618,34 @@ const FieldCard = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0"
+              className="h-6 sm:h-8 w-6 sm:w-8 p-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit();
               }}
-              disabled={!isFormDetailsComplete} // Disable if form details are not complete
+              disabled={!isFormDetailsComplete}
             >
-              <Edit className="h-4 w-4" />
+              <Edit className="h-3 sm:h-4 w-3 sm:w-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+              className="h-6 sm:h-8 w-6 sm:w-8 p-0 text-destructive hover:text-destructive"
               onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
-              disabled={!isFormDetailsComplete} // Disable if form details are not complete
+              disabled={!isFormDetailsComplete}
             >
-              <Trash2 className="h-4 w-4" />
+              <Trash2 className="h-3 sm:h-4 w-3 sm:w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0" onClick={onSelect}>
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2 flex-wrap">
+      <CardContent className="pt-0 p-3 sm:p-6" onClick={onSelect}>
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex gap-1 sm:gap-2 flex-wrap">
             {field.required && (
               <Badge variant="secondary" className="text-xs">Required</Badge>
             )}
@@ -571,14 +663,16 @@ const FieldCard = ({
           <FieldTypeDropdown onSelectType={(type) => onAddSubfield(field.fieldId, type)} disabled={!isFormDetailsComplete} />
         </div>
       </CardContent>
+      
       {/* Render input element for preview/interaction */}
-      <CardContent className="pt-0 border-t mt-4">
+      <CardContent className="pt-0 border-t mt-2 sm:mt-4 p-3 sm:p-6">
         <div className="py-2">
           {field.type === 'text' && (
             <Input
               placeholder={field.placeholder || "Enter text"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
-              disabled={!isFormDetailsComplete} // Disable input
+              disabled={!isFormDetailsComplete}
+              className="text-sm"
             />
           )}
           {field.type === 'email' && (
@@ -586,7 +680,8 @@ const FieldCard = ({
               type="email"
               placeholder={field.placeholder || "Enter email"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
-              disabled={!isFormDetailsComplete} // Disable input
+              disabled={!isFormDetailsComplete}
+              className="text-sm"
             />
           )}
           {field.type === 'phone' && (
@@ -594,7 +689,8 @@ const FieldCard = ({
               type="tel"
               placeholder={field.placeholder || "Enter phone number"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
-              disabled={!isFormDetailsComplete} // Disable input
+              disabled={!isFormDetailsComplete}
+              className="text-sm"
             />
           )}
           {field.type === 'number' && (
@@ -602,24 +698,27 @@ const FieldCard = ({
               type="number"
               placeholder={field.placeholder || "Enter number"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
-              disabled={!isFormDetailsComplete} // Disable input
+              disabled={!isFormDetailsComplete}
+              className="text-sm"
             />
           )}
           {field.type === 'text_area' && (
             <Textarea
               placeholder={field.placeholder || "Enter a detailed response"}
               onChange={(e) => onValueChange(field.fieldId, e.target.value)}
-              disabled={!isFormDetailsComplete} // Disable textarea
+              disabled={!isFormDetailsComplete}
+              className="text-sm resize-none"
+              rows={3}
             />
           )}
           {(field.type === 'dropdown' || field.type === 'radio') && field.options && (
-            <Select onValueChange={(value) => onValueChange(field.fieldId, value)} disabled={!isFormDetailsComplete}> // Disable select
-              <SelectTrigger>
+            <Select onValueChange={(value) => onValueChange(field.fieldId, value)} disabled={!isFormDetailsComplete}>
+              <SelectTrigger className="text-sm">
                 <SelectValue placeholder={field.placeholder || "Select an option"} />
               </SelectTrigger>
               <SelectContent>
                 {field.options.map(option => (
-                  <SelectItem key={option.optionId} value={option.value}>
+                  <SelectItem key={option.optionId} value={option.value} className="text-sm">
                     {option.label}
                   </SelectItem>
                 ))}
@@ -640,9 +739,9 @@ const FieldCard = ({
                         onValueChange(field.fieldId, currentValues.filter((val: string) => val !== option.value));
                       }
                     }}
-                    disabled={!isFormDetailsComplete} // Disable checkbox
+                    disabled={!isFormDetailsComplete}
                   />
-                  <Label htmlFor={option.optionId}>{option.label}</Label>
+                  <Label htmlFor={option.optionId} className="text-sm">{option.label}</Label>
                 </div>
               ))}
             </div>

@@ -124,28 +124,28 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back! Here's your lead management overview.</p>
+    <div className="space-y-4 md:space-y-6 p-4 md:p-6">
+      <div className="space-y-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Welcome back! Here's your lead management overview.</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Card key={stat.title} className="border border-border">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg bg-${stat.color}/10`}>
-                  <Icon className={`h-4 w-4 text-${stat.color}`} />
+                <div className={`p-1.5 md:p-2 rounded-lg bg-${stat.color}/10`}>
+                  <Icon className={`h-3 w-3 md:h-4 md:w-4 text-${stat.color}`} />
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stat.value}</div>
+              <CardContent className="p-4 md:p-6 pt-0">
+                <div className="text-xl md:text-2xl font-bold text-foreground">{stat.value}</div>
                 <p className={`text-xs ${
                   stat.changeType === 'positive' ? 'text-success' : 'text-destructive'
                 }`}>
@@ -157,26 +157,26 @@ const Dashboard: React.FC = () => {
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
         {/* Recent Activities */}
         <Card className="border border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <TrendingUp className="h-4 w-4 md:h-5 md:w-5" />
               Recent Activities
             </CardTitle>
-            <CardDescription>Latest updates and activities</CardDescription>
+            <CardDescription className="text-sm">Latest updates and activities</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6 pt-0">
             {recentActivities.map((activity) => (
-              <div key={activity.id} className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-foreground">
+              <div key={activity.id} className="flex items-start md:items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">
                     {activity.message}
                   </p>
                   <p className="text-xs text-muted-foreground">{activity.time}</p>
                 </div>
-                <Badge variant={getStatusColor(activity.status) as any}>
+                <Badge variant={getStatusColor(activity.status) as any} className="text-xs shrink-0">
                   {activity.status}
                 </Badge>
               </div>
@@ -186,26 +186,26 @@ const Dashboard: React.FC = () => {
 
         {/* Upcoming Follow-ups */}
         <Card className="border border-border">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+              <Clock className="h-4 w-4 md:h-5 md:w-5" />
               Upcoming Follow-ups
             </CardTitle>
-            <CardDescription>Scheduled meetings and calls</CardDescription>
+            <CardDescription className="text-sm">Scheduled meetings and calls</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3 md:space-y-4 p-4 md:p-6 pt-0">
             {upcomingFollowUps.map((followUp) => (
               <div key={followUp.id} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
+                <div className="flex items-start md:items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">
                       {followUp.company}
                     </p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground truncate">
                       {followUp.contact} • {followUp.type}
                     </p>
                   </div>
-                  <Badge variant={getPriorityColor(followUp.priority) as any}>
+                  <Badge variant={getPriorityColor(followUp.priority) as any} className="text-xs shrink-0">
                     {followUp.priority}
                   </Badge>
                 </div>
@@ -218,29 +218,29 @@ const Dashboard: React.FC = () => {
 
       {/* Conversion Progress */}
       <Card className="border border-border">
-        <CardHeader>
-          <CardTitle>Monthly Goals Progress</CardTitle>
-          <CardDescription>Track your progress towards monthly targets</CardDescription>
+        <CardHeader className="p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">Monthly Goals Progress</CardTitle>
+          <CardDescription className="text-sm">Track your progress towards monthly targets</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6 pt-0">
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Leads Generated</span>
-              <span className="text-foreground">847 / 1000</span>
+              <span className="text-foreground font-medium">847 / 1000</span>
             </div>
             <Progress value={84.7} className="h-2" />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Conversions</span>
-              <span className="text-foreground">204 / 300</span>
+              <span className="text-foreground font-medium">204 / 300</span>
             </div>
             <Progress value={68} className="h-2" />
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Revenue Target</span>
-              <span className="text-foreground">$48,520 / $60,000</span>
+              <span className="text-foreground font-medium">$48,520 / $60,000</span>
             </div>
             <Progress value={80.9} className="h-2" />
           </div>

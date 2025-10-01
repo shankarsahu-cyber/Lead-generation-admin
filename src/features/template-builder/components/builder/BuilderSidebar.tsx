@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FormData, FormStep, FormField, TreeNode } from '../../types/form-builder';
+import { FormData, FormStep, FormField, TreeNode } from '../../types/template-builder';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
 // TreeView component is integrated directly in this file
@@ -144,7 +144,7 @@ export const BuilderSidebar = ({
     }
   };
 
-  const addNewStep = () => {
+  const handleAddStep = () => {
     const newStepId = `step${formData.steps.length + 1}`;
     const newStep: FormStep = {
       stepId: newStepId,
@@ -165,6 +165,26 @@ export const BuilderSidebar = ({
     onDeleteStep(stepId);
   };
 
+  const getTotalFieldCount = (): number => {
+    let count = 0;
+    const countFields = (fields: FormField[]): number => {
+      let fieldCount = 0;
+      fields.forEach(field => {
+        fieldCount += 1;
+        if (field.subFields && field.subFields.length > 0) {
+          fieldCount += countFields(field.subFields);
+        }
+      });
+      return fieldCount;
+    };
+
+    formData.steps.forEach(step => {
+      count += countFields(step.fields);
+    });
+
+    return count;
+  };
+
   const renderTreeNode = (nodeId: string): React.ReactNode => {
     const node = treeNodes.get(nodeId);
     if (!node) return null;
@@ -175,14 +195,15 @@ export const BuilderSidebar = ({
       : node.stepId === selectedStepId && selectedFieldPath.join('.') === nodeId.split('.').slice(1).join('.');
 
     const hasChildren = node.children.length > 0;
-    const IndentComponent = () => <div style={{ width: `${(node.level - 1) * 16}px` }} />;
+    const IndentComponent = () => <div style={{ width: `${(node.level - 1) * 12}px` }} className="flex-shrink-0" />;
 
     return (
       <div key={nodeId}>
         <div
-          className={`flex items-center gap-1 px-2 py-1 cursor-pointer hover:bg-muted/50 rounded-sm group transition-colors ${
-            isSelected ? 'bg-primary/10 text-primary font-medium' : ''
-          }`}
+          className={cn(
+            "flex items-center gap-1 px-2 py-1.5 cursor-pointer hover:bg-muted/50 rounded-sm group transition-colors text-sm",
+            isSelected && "bg-primary/10 text-primary font-medium"
+          )}
           onClick={() => handleNodeClick(nodeId)}
         >
           <IndentComponent />
@@ -191,7 +212,7 @@ export const BuilderSidebar = ({
             <Button
               variant="ghost"
               size="sm"
-              className="h-4 w-4 p-0"
+              className="h-4 w-4 p-0 flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleExpanded(nodeId);
@@ -205,13 +226,13 @@ export const BuilderSidebar = ({
             </Button>
           )}
           
-          {!hasChildren && <div className="w-4" />}
+          {!hasChildren && <div className="w-4 flex-shrink-0" />}
           
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
             {node.type === 'step' ? (
-              isExpanded ? <FolderOpen className="h-4 w-4 text-primary" /> : <Folder className="h-4 w-4 text-primary" />
+              isExpanded ? <FolderOpen className="h-3.5 w-3.5 text-primary flex-shrink-0" /> : <Folder className="h-3.5 w-3.5 text-primary flex-shrink-0" />
             ) : (
-              <FileText className="h-4 w-4 text-muted-foreground" />
+              <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
             )}
             {node.type === 'step' && editingNodeId === node.id ? (
               <input
@@ -228,12 +249,12 @@ export const BuilderSidebar = ({
                   }
                 }}
                 onClick={(e) => e.stopPropagation()} // Prevent node click when editing
-                className="flex-1 bg-transparent text-sm truncate border-b border-primary-foreground focus:outline-none focus:border-primary"
+                className="flex-1 bg-transparent text-xs sm:text-sm truncate border-b border-primary-foreground focus:outline-none focus:border-primary min-w-0"
                 autoFocus
               />
             ) : (
               <span 
-                className="text-sm truncate flex-1"
+                className="text-xs sm:text-sm truncate flex-1 min-w-0"
                 onDoubleClick={(e) => {
                   if (node.type === 'step') {
                     e.stopPropagation();
@@ -246,11 +267,11 @@ export const BuilderSidebar = ({
             )}
           </div>
           {node.type === 'step' && node.id !== 'root' && (
-            <>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-5 w-5 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
                   setEditingNodeId(node.id);
@@ -258,12 +279,12 @@ export const BuilderSidebar = ({
                 aria-label={`Edit step ${node.label}`}
                 disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
-                <Edit2 className="h-3 w-3" />
+                <Edit2 className="h-2.5 w-2.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 text-destructive hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-5 w-5 p-0 text-destructive hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDeleteStep(node.id);
@@ -271,9 +292,9 @@ export const BuilderSidebar = ({
                 aria-label={`Delete step ${node.label}`}
                 disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
-                <Trash2 className="h-3 w-3" />
+                <Trash2 className="h-2.5 w-2.5" />
               </Button>
-            </>
+            </div>
           )}
         </div>
         
@@ -287,34 +308,49 @@ export const BuilderSidebar = ({
   };
 
   return (
-    <aside
-      className={cn(
-        "flex flex-col bg-card border-r border-border transition-transform duration-200 ease-in-out",
-        "fixed inset-y-0 left-0 z-50 w-full md:w-80",
-        isOpen ? "translate-x-0" : "-translate-x-full",
-        "md:relative md:translate-x-0"
-      )}
-    >
-      <div className="p-4 border-b">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-foreground">Form Structure</h2>
+    <div className="h-full bg-card border-r border-border flex flex-col">
+      {/* Header */}
+      <div className="p-3 sm:p-4 border-b border-border bg-muted/30">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm sm:text-base font-semibold text-foreground truncate">
+            Form Structure
+          </h3>
           <Button
+            variant="outline"
             size="sm"
-            onClick={addNewStep}
-            className="h-8 gap-1 bg-gradient-to-r from-builder-primary to-builder-secondary hover:opacity-90"
-            disabled={!isFormDetailsComplete} // Disable if form details are not complete
+            onClick={handleAddStep}
+            className="h-6 sm:h-7 px-1.5 sm:px-2 text-xs"
+            disabled={!isFormDetailsComplete}
           >
-            <Plus className="h-3 w-3" />
-            Step
+            <Plus className="h-3 w-3 mr-1" />
+            <span className="hidden sm:inline">Step</span>
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          {formData.steps.length} step{formData.steps.length !== 1 ? 's' : ''}
+        </p>
       </div>
-      
-      <ScrollArea className="flex-1">
-        <div className="p-2">
-          {renderTreeNode('root')}
+
+      {/* Tree View */}
+      <ScrollArea className="flex-1 p-2 sm:p-3">
+        <div className="space-y-0.5">
+          {treeNodes.get('root') && renderTreeNode('root')}
         </div>
       </ScrollArea>
-    </aside>
+
+      {/* Footer */}
+      <div className="p-3 sm:p-4 border-t border-border bg-muted/30">
+        <div className="text-xs text-muted-foreground space-y-1">
+          <div className="flex justify-between items-center">
+            <span>Total Fields:</span>
+            <span className="font-medium">{getTotalFieldCount()}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Steps:</span>
+            <span className="font-medium">{formData.steps.length}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };

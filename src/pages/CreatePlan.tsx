@@ -171,16 +171,16 @@ const CreatePlan: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-background">
-      <div className="max-w-4xl mx-auto w-full flex flex-col flex-1">
+    <div className="w-full min-h-screen flex flex-col bg-background p-4 sm:p-6">
+      <div className="max-w-7xl mx-auto w-full flex flex-col flex-1">
         {/* Page Header */}
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-foreground">Create New Plan</h1>
-          <p className="text-muted-foreground">Design a new subscription plan for your merchants</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Create New Plan</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">Design a new subscription plan for your merchants</p>
         </div>
 
         {/* Form */}
-        <div className="createplanform-wide">
+        <div className="createplanform-wide mb-6 sm:mb-8">
           <CreatePlanForm
             formData={formData}
             handleInputChange={handleInputChange}
@@ -190,110 +190,124 @@ const CreatePlan: React.FC = () => {
         </div>
 
         {/* All Plans List */}
-        <Card className="border border-border mt-6">
-          <CardHeader className="pb-2">
-            <CardTitle>All Plans</CardTitle>
-            <CardDescription>View and manage all existing plans</CardDescription>
+        <Card className="border border-border">
+          <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
+            <CardTitle className="text-lg sm:text-xl">All Plans</CardTitle>
+            <CardDescription className="text-sm">View and manage all existing plans</CardDescription>
           </CardHeader>
-          <CardContent className="pb-6">
-            {loadingPlans && <div className="text-center">Loading plans...</div>}
-            {errorFetchingPlans && <div className="text-center text-destructive">Error: {errorFetchingPlans}</div>}
+          <CardContent className="pb-4 sm:pb-6 px-4 sm:px-6">
+            {loadingPlans && <div className="text-center py-8 text-sm sm:text-base">Loading plans...</div>}
+            {errorFetchingPlans && <div className="text-center text-destructive py-8 text-sm sm:text-base">Error: {errorFetchingPlans}</div>}
             {!loadingPlans && allPlans.length === 0 && !errorFetchingPlans && (
-              <div className="text-center text-muted-foreground">No plans found.</div>
+              <div className="text-center text-muted-foreground py-8 text-sm sm:text-base">No plans found.</div>
             )}
-            {allPlans.map((plan) => (
-              <div key={plan.id} className="p-4 border border-border rounded-lg mb-3 last:mb-0">
-                <div className="flex justify-between items-start mb-2">
-                  <h4 className="font-medium text-foreground">{plan.name}</h4>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-primary">
-                      ${plan.price}/{plan.billingCycle.toLowerCase()}
-                    </span>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => handleDeletePlanClick(plan.id)}
-                          >
-                            <Trash className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Delete Plan</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+            <div className="space-y-4">
+              {allPlans.map((plan) => (
+                <div key={plan.id} className="p-3 sm:p-4 border border-border rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-foreground text-sm sm:text-base truncate">{plan.name}</h4>
+                      {plan.description && (
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 line-clamp-2">{plan.description}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 flex-shrink-0">
+                      <span className="font-bold text-primary text-sm sm:text-base">
+                        ${plan.price}/{plan.billingCycle.toLowerCase()}
+                      </span>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+                              onClick={() => handleDeletePlanClick(plan.id)}
+                            >
+                              <Trash className="h-3 w-3 sm:h-4 sm:w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Delete Plan</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
+                    <p>Max Forms: <span className="font-medium">{plan.maxForms}</span></p>
+                    <p>Max Leads/Month: <span className="font-medium">{plan.maxLeadsPerMonth}</span></p>
+                    <p>Max Locations: <span className="font-medium">{plan.maxLocations}</span></p>
+                  </div>
+                  
+                  <div className="mt-3">
+                    <p className="font-medium text-xs sm:text-sm mb-2">Features:</p>
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
+                      {(() => {
+                        let featuresArr = [];
+                        try {
+                          const parsed = JSON.parse(plan.features || '[]');
+                          if (Array.isArray(parsed)) {
+                            featuresArr = parsed;
+                          } else if (parsed && typeof parsed === 'object') {
+                            featuresArr = Object.keys(parsed).filter(key => parsed[key]);
+                          }
+                        } catch {
+                          featuresArr = [];
+                        }
+                        const FEATURES_LIST = [
+                          { value: 'analytics', label: 'Analytics' },
+                          { value: 'customBranding', label: 'Custom Branding' },
+                          { value: 'leadCaptureForms', label: 'Lead Capture Forms' },
+                          { value: 'crmIntegration', label: 'CRM Integration' },
+                          { value: 'emailMarketing', label: 'Email Marketing' },
+                          { value: 'landingPages', label: 'Landing Pages' },
+                          { value: 'leadNurturingAutomation', label: 'Lead Nurturing Automation' },
+                          { value: 'leadAnalyticsReporting', label: 'Lead Analytics & Reporting' },
+                          { value: 'leadScoring', label: 'Lead Scoring' },
+                          { value: 'multiChannelCampaigns', label: 'Multi-Channel Campaigns' },
+                          { value: 'conversionTracking', label: 'Conversion Tracking' },
+                          { value: 'aiChatbots', label: 'AI Chatbots' },
+                        ];
+                        if (!featuresArr || featuresArr.length === 0) {
+                          return <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">None</span>;
+                        }
+                        return featuresArr.map(fKey => {
+                          const f = FEATURES_LIST.find(x => x.value === fKey);
+                          return f ? (
+                            <div key={f.value} className="flex items-center gap-1 text-xs bg-green-50 text-green-700 px-2 py-1 rounded border border-green-200">
+                              <Check className="h-3 w-3 flex-shrink-0" /> 
+                              <span className="truncate">{f.label}</span>
+                            </div>
+                          ) : null;
+                        });
+                      })()}
+                    </div>
                   </div>
                 </div>
-                {plan.description && <p className="text-sm text-muted-foreground mb-2">{plan.description}</p>}
-                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                  <p>Max Forms: {plan.maxForms}</p>
-                  <p>Max Leads/Month: {plan.maxLeadsPerMonth}</p>
-                  <p>Max Locations: {plan.maxLocations}</p>
-                </div>
-                <div className="mt-2">
-                  <p className="font-medium">Features:</p>
-                  {(() => {
-                    let featuresArr = [];
-                    try {
-                      const parsed = JSON.parse(plan.features || '[]');
-                      if (Array.isArray(parsed)) {
-                        featuresArr = parsed;
-                      } else if (parsed && typeof parsed === 'object') {
-                        featuresArr = Object.keys(parsed).filter(key => parsed[key]);
-                      }
-                    } catch {
-                      featuresArr = [];
-                    }
-                    const FEATURES_LIST = [
-                      { value: 'analytics', label: 'Analytics' },
-                      { value: 'customBranding', label: 'Custom Branding' },
-                      { value: 'leadCaptureForms', label: 'Lead Capture Forms' },
-                      { value: 'crmIntegration', label: 'CRM Integration' },
-                      { value: 'emailMarketing', label: 'Email Marketing' },
-                      { value: 'landingPages', label: 'Landing Pages' },
-                      { value: 'leadNurturingAutomation', label: 'Lead Nurturing Automation' },
-                      { value: 'leadAnalyticsReporting', label: 'Lead Analytics & Reporting' },
-                      { value: 'leadScoring', label: 'Lead Scoring' },
-                      { value: 'multiChannelCampaigns', label: 'Multi-Channel Campaigns' },
-                      { value: 'conversionTracking', label: 'Conversion Tracking' },
-                      { value: 'aiChatbots', label: 'AI Chatbots' },
-                    ];
-                    if (!featuresArr || featuresArr.length === 0) return <span className="text-xs text-muted-foreground">None</span>;
-                    return featuresArr.map(fKey => {
-                      const f = FEATURES_LIST.find(x => x.value === fKey);
-                      return f ? (
-                        <div key={f.value} className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Check className="h-3 w-3" /> {f.label}
-                        </div>
-                      ) : null;
-                    });
-                  })()}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
-          <DialogContent>
+          <DialogContent className="w-[95vw] max-w-md mx-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertCircle className="h-5 w-5" /> Confirm Plan Deletion
+              <DialogTitle className="flex items-center gap-2 text-destructive text-base sm:text-lg">
+                <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" /> 
+                <span>Confirm Plan Deletion</span>
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-sm">
                 Are you sure you want to delete this plan? This action cannot be undone.
               </DialogDescription>
             </DialogHeader>
-            <DialogFooter className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDeleteConfirmDialog(false)}>
+            <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-3">
+              <Button variant="outline" onClick={() => setShowDeleteConfirmDialog(false)} className="w-full sm:w-auto">
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={confirmDeleteAction}>
+              <Button variant="destructive" onClick={confirmDeleteAction} className="w-full sm:w-auto">
                 Delete
               </Button>
             </DialogFooter>

@@ -212,7 +212,7 @@ export const PreviewModal = ({ isOpen, onClose, formData, onSaveForm }: PreviewM
               disabled={isLastStep && currentPreviewFieldPath.length === 0}
               className="bg-gradient-to-r from-builder-primary to-builder-secondary"
             >
-              {isLastStep ? "Create Template" : "Next Step"}
+              {isLastStep ? "Save Form" : "Next Step"}
             </Button>
         </div>
       </DialogContent>

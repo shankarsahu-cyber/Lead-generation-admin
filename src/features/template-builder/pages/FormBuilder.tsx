@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FormData, FormStep, FormField, TreeNode, ExportFormat, APIFormData } from '../types/template-builder';
 import { BuilderSidebar } from '../components/builder/BuilderSidebar';
 import { BuilderHeader } from '../components/builder/BuilderHeader';
 import { BuilderContent } from '../components/builder/BuilderContent';
 import { PreviewModal } from '../components/builder/PreviewModal';
 import MyForms from './MyForms'; // Import MyForms component
-import { useToast } from '../hooks/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { saveForm } from '../services/api'; // Import saveForm API
 import { getAllForms, deleteForm } from '../services/api'; // Import getAllForms and deleteForm API
 import { saveTemplate, TemplateCategory } from '../services/api'; // Import saveTemplate API and TemplateCategory
@@ -86,7 +87,9 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
   const [builderSidebarOpen, setBuilderSidebarOpen] = useState(true); // New state for builder sidebar
   const [refreshDashboard, setRefreshDashboard] = useState(0); // New state to trigger dashboard refresh
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false); // Changed to false to not open modal initially
+  const [isSaving, setIsSaving] = useState(false); // Loading state for form save
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const isFormDetailsComplete = (
     formData.name.trim() !== '' &&
@@ -99,9 +102,24 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
   };
 
   const handleSaveForm = async () => {
+    console.log('🚀 handleSaveForm called');
+    
+
+    // Prevent multiple saves
+    if (isSaving) {
+      console.log('⚠️ Save already in progress, returning');
+      return;
+    }
+    
     try {
+      console.log('✅ Starting save process');
+      setIsSaving(true); // Start loading
+      
       // Validate form data
+      console.log('📝 Form data:', formData);
+      
       if (!formData.name || formData.name.trim() === '') {
+        console.log('❌ Validation failed: No form name');
         toast({
           title: "Save Failed",
           description: "Please provide a form name before saving.",
@@ -111,6 +129,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       }
 
       if (!formData.steps || formData.steps.length === 0) {
+        console.log('❌ Validation failed: No form steps');
         toast({
           title: "Save Failed",
           description: "Form must have at least one step to save.",
@@ -119,28 +138,31 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      // Call the saveTemplate API
-      await saveTemplate(formData, toast);
+      console.log('✅ Validation passed, calling saveTemplate API');
       
-      toast({
-        title: "Template Saved",
-        description: `Template "${formData.name}" created successfully!`, // Changed from Form Saved
-        variant: "default",
-      });
-      setRefreshDashboard(prev => prev + 1); // Trigger dashboard refresh
+      // Call the saveTemplate API (it handles its own success/error toasts)
+      const result = await saveTemplate(formData, toast);
+      console.log('✅ saveTemplate completed successfully:', result);
+      
+      // Trigger dashboard refresh
+      console.log('🔄 Triggering dashboard refresh');
+      setRefreshDashboard(prev => prev + 1);
 
-      // No need for localStorage fallback or parent onSave handler if API save is successful
+      // Redirect to My Forms page immediately after successful save
+      console.log('🏠 Redirecting to My Forms page');
+      setShowDashboard(true);
+      console.log('✅ Save process completed successfully');
+
     } catch (error) {
-      console.error('Save error:', error);
-        toast({
-          title: "Save Failed",
-          description: `There was an error saving your template: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          variant: "destructive",
-        });
+      console.error('❌ Save error:', error);
+      // Error toast is already handled by saveTemplate function
+    } finally {
+      console.log('🏁 Setting isSaving to false');
+      setIsSaving(false); // End loading
     }
   };
 
-  const handleLoadForm = async (formId: string) => {
+  const handleLoadForm = async (formId: string | number) => {
     try {
       if (!formId) {
         toast({
@@ -152,7 +174,10 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
       }
 
       const allForms = await getAllForms(toast);
-      const formToLoad = allForms.find(form => String(form.formId) === formId); // Use String(form.formId) for comparison
+      // Support both string formId and numeric id for loading
+      const formToLoad = allForms.find(form => 
+        String(form.formId) === String(formId) || form.id === Number(formId)
+      );
 
       if (!formToLoad) {
         toast({
@@ -165,16 +190,16 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
 
       setFormData({
         ...formToLoad,
-        id: formToLoad.formId // Set the id when loading the form
+        id: formToLoad.id // Use the numeric ID from backend, not the string formId
       });
       setSelectedStepId(formToLoad.steps[0]?.stepId || '');
       setSelectedFieldPath([]);
       setShowDashboard(false);
       
       toast({
-        title: "Form Loaded",
+        title: "Form Loaded Successfully! 🎉",
         description: `Form "${formToLoad.name}" has been loaded!`, 
-        variant: "default",
+        variant: "success",
       });
       
     } catch (error) {
@@ -217,12 +242,21 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         return;
       }
 
-      await deleteForm(id, toast);
-      
+      // Show deleting toast
       toast({
-        title: "Form Deleted",
+        title: "Deleting Form... 🗑️",
+        description: "Please wait while your form is being deleted.",
+      });
+
+      console.log('Starting delete process for template ID:', id);
+      const result = await deleteForm(id, toast);
+      console.log('Delete result:', result);
+      
+      // Show success toast with color
+      toast({
+        title: "Form Deleted Successfully! 🎉",
         description: `Form has been deleted successfully!`,
-        variant: "default",
+        variant: "success",
       });
       console.log("Template deleted successfully, triggering dashboard refresh.");
       setRefreshDashboard(prev => prev + 1); // Trigger dashboard refresh
@@ -231,12 +265,33 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
 
     } catch (error) {
       console.error('Delete error in handleDeleteSavedForm:', error);
+      console.error('Error type:', typeof error);
+      console.error('Error details:', {
+        message: error?.message,
+        response: error?.response?.data,
+        status: error?.response?.status
+      });
+      
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
-        title: "Delete Failed",
-        description: `There was an error deleting the form: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        title: "Delete Failed ❌",
+        description: `There was an error deleting the form: ${errorMessage}`,
         variant: "destructive",
       });
     }
+  };
+
+  const handleNavigateToMyForms = () => {
+    setShowDashboard(true); // Switch to My Forms view
+    setRefreshDashboard(prev => prev + 1); // Trigger refresh to show updated data
   };
 
   const handleStepTitleChange = (stepId: string, newTitle: string) => {
@@ -377,7 +432,11 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
     <div className="h-screen flex flex-col bg-background">
       <BuilderHeader
         formName={formData.name}
+        formDescription={formData.description}
+        formCategory={formData.category}
         onFormNameChange={(name) => setFormData({ ...formData, name })}
+        onFormDescriptionChange={(description) => setFormData({ ...formData, description })}
+        onFormCategoryChange={(category) => setFormData({ ...formData, category })}
         onImportJSON={handleImportJSON}
         onExportJSON={handleExportJSON}
         onPreview={() => setIsPreviewOpen(true)}
@@ -388,6 +447,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         isDashboardActive={showDashboard}
         onToggleBuilderSidebar={() => setBuilderSidebarOpen(prev => !prev)} // Pass toggle function
         isBuilderSidebarOpen={builderSidebarOpen} // Pass sidebar state
+        isSaving={isSaving} // Pass loading state
         onNewForm={() => {
           setIsCreateModalOpen(true); // Open the new template creation modal
           // When creating a new form, ensure formData is reset and id is cleared
@@ -404,7 +464,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         }}
       />
       
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {showDashboard ? (
           <MyForms 
             onLoadForm={handleLoadForm}
@@ -423,8 +483,16 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         ) : (
           <>
             {isFormDetailsComplete ? (
-              <>
-                {builderSidebarOpen && (
+              <div className="flex-1 flex overflow-hidden">
+                {/* Builder Sidebar */}
+                <div className={`
+                  ${builderSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+                  lg:translate-x-0 lg:relative lg:flex
+                  fixed inset-y-0 left-0 z-30 w-64 sm:w-72 lg:w-80 xl:w-96
+                  transition-transform duration-300 ease-in-out
+                  bg-card border-r border-border
+                  flex flex-col
+                `}>
                   <BuilderSidebar
                     formData={formData}
                     selectedStepId={selectedStepId}
@@ -439,21 +507,36 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
                     isOpen={builderSidebarOpen} // Pass isOpen prop
                     isFormDetailsComplete={isFormDetailsComplete} // Pass the new prop
                   />
+                </div>
+
+                {/* Overlay for mobile */}
+                {builderSidebarOpen && (
+                  <div 
+                    className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+                    onClick={() => setBuilderSidebarOpen(false)}
+                  />
                 )}
                 
-                <BuilderContent
-                  step={selectedStep}
-                  formData={formData}
-                  selectedFieldPath={selectedFieldPath}
-                  onFormDataChange={handleFormDataChange}
-                  onFieldSelect={setSelectedFieldPath}
-                  onStepSelect={setSelectedStepId}
-                  isFormDetailsComplete={isFormDetailsComplete} // Pass the new prop
-                />
-              </>
+                {/* Main Content */}
+                <div className="flex-1 min-w-0 overflow-hidden">
+                  <BuilderContent
+                    step={selectedStep}
+                    formData={formData}
+                    selectedFieldPath={selectedFieldPath}
+                    onFormDataChange={handleFormDataChange}
+                    onFieldSelect={setSelectedFieldPath}
+                    onStepSelect={setSelectedStepId}
+                    isFormDetailsComplete={isFormDetailsComplete} // Pass the new prop
+                    onNavigateToMyForms={handleNavigateToMyForms} // Pass navigation callback
+                  />
+                </div>
+              </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center p-4 text-center text-muted-foreground">
-                Please provide a Form Name, Description, and Category to start building your template.
+              <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 text-center text-muted-foreground">
+                <div className="max-w-md mx-auto">
+                  <h3 className="text-lg sm:text-xl font-medium mb-2">Complete Form Details</h3>
+                  <p className="text-sm sm:text-base">Please provide a Form Name, Description, and Category to start building your template.</p>
+                </div>
               </div>
             )}
           </>
