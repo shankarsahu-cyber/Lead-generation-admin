@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleStatusUpdate = async (merchantId: string, newStatus: 'ACTIVE' | 'INACTIVE') => {
+  const handleStatusUpdate = async (merchantId: string, newStatus: 'ACTIVE' | 'CANCELLED') => {
     try {
       await updateMerchantStatus(merchantId, newStatus);
       
@@ -226,7 +226,7 @@ const Dashboard: React.FC = () => {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleStatusUpdate(merchant.id, 'INACTIVE')}
+                      onClick={() => handleStatusUpdate(merchant.id, 'CANCELLED')}
                     >
                       <XCircle className="h-3 w-3 mr-1" />
                       Reject
