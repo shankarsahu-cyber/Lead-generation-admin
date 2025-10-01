@@ -33,6 +33,8 @@ const AllMerchants: React.FC = () => {
   // Removed states related to merchant details dialog
   const [activeMerchantPlan, setActiveMerchantPlan] = useState<Plan | null>(null);
   const [activeMerchantRegularPlan, setActiveMerchantRegularPlan] = useState<Plan | null>(null); // New state for regular plan in assign dialog
+  const [isPlanDetailsDialogOpen, setIsPlanDetailsDialogOpen] = useState<boolean>(false); // New state for plan details dialog
+  const [selectedPlanDetails, setSelectedPlanDetails] = useState<Plan | null>(null); // New state for selected plan details
 
   // Filter plans into regular and addon types
   const regularPlans = plans.filter(p => p.billingCycle === 'MONTHLY' || p.billingCycle === 'YEARLY');
@@ -339,6 +341,27 @@ const AllMerchants: React.FC = () => {
     }
   }, [plans, toast]);
 
+  const handlePlanClick = useCallback((planName: string) => {
+    if (planName === 'N/A' || planName === 'Error') return;
+    
+    // Remove (Add-on) suffix if present
+    const cleanPlanName = planName.replace(' (Add-on)', '');
+    
+    // Find the plan details
+    const planDetails = plans.find(plan => plan.name === cleanPlanName);
+    
+    if (planDetails) {
+      setSelectedPlanDetails(planDetails);
+      setIsPlanDetailsDialogOpen(true);
+    } else {
+      toast({
+        title: "Plan Not Found",
+        description: "Could not find details for this plan.",
+        variant: "destructive",
+      });
+    }
+  }, [plans, toast]);
+
   // Removed useEffect related to merchant details dialog
 
   return (
@@ -405,7 +428,11 @@ const AllMerchants: React.FC = () => {
                         <Badge variant={getStatusColor(merchant.status) as any} className="text-xs">
                           {merchant.status}
                         </Badge>
-                        <Badge variant={getPlanColor(merchant.activePlanName || '')} className="text-xs">
+                        <Badge 
+                          variant={getPlanColor(merchant.activePlanName || '')} 
+                          className="text-xs cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => handlePlanClick(merchant.activePlanName || '')}
+                        >
                           {merchant.activePlanName || 'N/A'}
                         </Badge>
                       </div>
@@ -558,7 +585,11 @@ const AllMerchants: React.FC = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getPlanColor(merchant.activePlanName || '')}>
+                        <Badge 
+                          variant={getPlanColor(merchant.activePlanName || '')}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => handlePlanClick(merchant.activePlanName || '')}
+                        >
                           {merchant.activePlanName || 'N/A'}
                         </Badge>
                       </TableCell>
@@ -746,6 +777,89 @@ const AllMerchants: React.FC = () => {
               Apply Voucher
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan Details Dialog */}
+      <Dialog open={isPlanDetailsDialogOpen} onOpenChange={setIsPlanDetailsDialogOpen}>
+        <DialogContent className="w-[95vw] max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-lg">Plan Details</DialogTitle>
+            <DialogDescription className="text-sm">
+              Detailed information about the selected plan
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPlanDetails && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Plan Name</label>
+                  <p className="text-sm font-semibold">{selectedPlanDetails.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Price</label>
+                  <p className="text-sm font-semibold">${selectedPlanDetails.price}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Billing Cycle</label>
+                  <p className="text-sm font-semibold">{selectedPlanDetails.billingCycle}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Max Forms</label>
+                  <p className="text-sm font-semibold">{selectedPlanDetails.maxForms}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Max Leads/Month</label>
+                  <p className="text-sm font-semibold">{selectedPlanDetails.maxLeadsPerMonth}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Max Locations</label>
+                  <p className="text-sm font-semibold">{selectedPlanDetails.maxLocations}</p>
+                </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Description</label>
+                <p className="text-sm mt-1">{selectedPlanDetails.description}</p>
+              </div>
+              
+              {selectedPlanDetails.features && (
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Features</label>
+                  <div className="mt-1">
+                    {(() => {
+                      try {
+                        const features = JSON.parse(selectedPlanDetails.features);
+                        return (
+                          <ul className="text-sm space-y-1">
+                            {features.map((feature: string, index: number) => (
+                              <li key={index} className="flex items-center">
+                                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      } catch {
+                        return <p className="text-sm">{selectedPlanDetails.features}</p>;
+                      }
+                    })()}
+                  </div>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
+                <div>
+                  <label>Created At</label>
+                  <p>{new Date(selectedPlanDetails.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <label>Updated At</label>
+                  <p>{new Date(selectedPlanDetails.updatedAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
