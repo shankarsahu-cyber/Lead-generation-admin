@@ -49,9 +49,11 @@ const AllMerchants: React.FC = () => {
         response.content.map(async (merchant) => {
           try {
             const subscriptions = await getMerchantSubscriptions(merchant.id);
+            console.log(`Merchant ${merchant.id}: Fetched subscriptions:`, subscriptions);
             const activeRegularSubscription = subscriptions.find(
               (sub) => sub.status === 'ACTIVE' && (sub.billingCycle === 'MONTHLY' || sub.billingCycle === 'YEARLY')
             );
+            console.log(`Merchant ${merchant.id}: Active regular subscription found:`, activeRegularSubscription);
             return { ...merchant, activePlanName: activeRegularSubscription?.planName || 'N/A' };
           } catch (subErr) {
             console.error("Failed to fetch subscriptions for merchant", merchant.id, subErr);
@@ -477,12 +479,6 @@ const AllMerchants: React.FC = () => {
                               </DialogHeader>
                               <div className="space-y-4 py-4">
                                 <div className="space-y-2">
-                                  <label className="text-sm font-medium">Current Plan</label>
-                                  <p className="text-sm text-muted-foreground">
-                                    {activeMerchantRegularPlan ? `${activeMerchantRegularPlan.name} (${activeMerchantRegularPlan.billingCycle.toLowerCase()})` : "No active monthly/yearly plan"}
-                                  </p>
-                                </div>
-                                <div className="space-y-2">
                                   <label className="text-sm font-medium">Select New Plan</label>
                                   <Select
                                     value={selectedPlanId || ''}
@@ -562,12 +558,6 @@ const AllMerchants: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Current Plan</label>
-              <p className="text-sm text-muted-foreground">
-                {activeMerchantPlan ? `${activeMerchantPlan.name} (${activeMerchantPlan.billingCycle.toLowerCase()})` : "No active plan"}
-              </p>
-            </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Select Voucher Plan (Addon)</label>
               <Select

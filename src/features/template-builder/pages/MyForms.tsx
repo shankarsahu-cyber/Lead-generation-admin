@@ -114,13 +114,13 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm,
                     <Download className="h-4 w-4 mr-2" /> Use Template
                   </Button>
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => onLoadForm(form.formId)} className="w-full">
+                <Button variant="secondary" size="sm" className="w-full">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 mr-2">
                     <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.187 1.187Q14.97 4.393 14.5 4.863c-.563.562-.897 1.25-.994 2.025.21-.012.424-.025.64-.025h2.328c.325 0 .647.05.959.144L21.731 5.99a2.625 2.625 0 000-3.712zM12.75 11.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM12.75 18a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM15.75 14.25a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM18.75 6.75h-.008v-.008H18.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 11.25a.75.75 0 01.75-.75h.008v.008H12.75V11.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM12 18a.75.75 0 01.75-.75h.008v.008H12.75V18zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM2.25 15a.75.75 0 01.75-.75H12a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 6.75a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75zM2.25 10.5a.75.75 0 01.75-.75H9a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75z" />
                   </svg>
                   Update Template
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(form.formId)}>
+                <Button variant="destructive" size="sm">
                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                 </Button>
               </CardContent>
