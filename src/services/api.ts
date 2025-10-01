@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use environment variable for API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://13.234.225.69:8888/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://15.206.69.231:8888/api'; 
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -43,7 +43,7 @@ apiClient.interceptors.response.use(
         const storedUser = localStorage.getItem('user');
         if (storedUser) {
           const user = JSON.parse(storedUser);
-          const refreshUrl = 'http://13.234.225.69:8888/api/auth/refresh';
+          const refreshUrl = 'http://15.206.69.231/api/auth/refresh';
           // Debug log
           console.log('Attempting token refresh with refreshToken:', user.refreshToken);
           const refreshResponse = await axios.post(refreshUrl, {

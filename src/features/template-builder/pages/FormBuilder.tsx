@@ -480,7 +480,7 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
                 <div className={`
                   ${builderSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
                   lg:translate-x-0 lg:relative lg:flex
-                  fixed inset-y-0 left-0 z-30 w-64 sm:w-72 lg:w-80 xl:w-96
+                  fixed inset-y-0 left-0 z-30 w-48 sm:w-56 lg:w-64 xl:w-72
                   transition-transform duration-300 ease-in-out
                   bg-card border-r border-border
                   flex flex-col
