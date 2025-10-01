@@ -258,10 +258,8 @@ const FormBuilder = ({ auth, onSave }: FormBuilderProps) => {
         description: `Form has been deleted successfully!`,
         variant: "success",
       });
-      console.log("Template deleted successfully, triggering dashboard refresh.");
-      setRefreshDashboard(prev => prev + 1); // Trigger dashboard refresh
-      // After deleting, trigger a refresh of the forms list in MyForms component.
-      // This will be handled by MyForms component's useEffect which fetches forms on mount.
+      console.log("Template deleted successfully.");
+      // Note: MyForms component now handles instant UI updates, no refresh needed
 
     } catch (error) {
       console.error('Delete error in handleDeleteSavedForm:', error);

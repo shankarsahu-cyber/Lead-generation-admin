@@ -30,7 +30,6 @@ const MerchantDetailsPage: React.FC = () => {
           const data = await getMerchantDetails(merchantId);
           setMerchant(data);
         } catch (err) {
-          console.error("Failed to fetch merchant details:", err);
           setError("Failed to load merchant details.");
           toast({
             title: "Error",
@@ -56,7 +55,6 @@ const MerchantDetailsPage: React.FC = () => {
           const sortedSubscriptions = sortSubscriptions(data);
           setSubscriptions(sortedSubscriptions);
         } catch (err) {
-          console.error("Failed to fetch merchant subscriptions:", err);
           setSubscriptionError("Failed to load subscriptions.");
           toast({
             title: "Error",
@@ -149,7 +147,6 @@ const MerchantDetailsPage: React.FC = () => {
         variant: "success",
       });
     } catch (err) {
-      console.error("Failed to force activate subscription:", err);
       toast({
         title: "Error",
         description: "Failed to force activate subscription. Please try again.",

@@ -23,13 +23,13 @@ const Login: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    console.log('Attempting login with:', { email, password });
     const success = await login(email, password);
     
     if (success) {
       toast({
-        title: "Login successful",
+        title: "Login Successful! 🎉",
         description: "Welcome to Lead Manager Dashboard",
+        variant: "success",
       });
     } else {
       toast({

@@ -65,7 +65,13 @@ const MyForms: React.FC<MyFormsProps> = ({ onLoadForm, onPreviewForm, onNewForm,
   const confirmDelete = () => {
     if (templateToDeleteId) {
       console.log("MyForms: Delete confirmed for templateId:", templateToDeleteId);
+      
+      // Instantly remove the form from UI state for immediate visual feedback
+      setForms(prevForms => prevForms.filter(form => form.id !== templateToDeleteId));
+      
+      // Call the delete function (which handles API call and shows toast)
       onDeleteForm(templateToDeleteId);
+      
       setTemplateToDeleteId(null);
       setIsDeleteDialogOpen(false);
     }

@@ -64,8 +64,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     localStorage.removeItem('user');
     toast({
-      title: "Logged Out",
+      title: "Logged Out Successfully! 👋",
       description: "You have been successfully logged out.",
+      variant: "info",
     });
   };
 

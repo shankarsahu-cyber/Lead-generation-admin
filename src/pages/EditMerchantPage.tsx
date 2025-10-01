@@ -27,7 +27,6 @@ const EditMerchantPage: React.FC = () => {
           setMerchant(data);
           setFormData(data);
         } catch (err) {
-          console.error("Failed to fetch merchant details:", err);
           setError("Failed to load merchant details.");
           toast({
             title: "Error",
@@ -61,12 +60,12 @@ const EditMerchantPage: React.FC = () => {
       }
       await updateMerchantDetails(merchantId, formData);
       toast({
-        title: "Merchant Updated",
+        title: "Merchant Updated Successfully! ✅",
         description: "Merchant details have been successfully updated.",
+        variant: "success",
       });
       navigate(`/merchants/${merchantId}`);
     } catch (err) {
-      console.error("Failed to update merchant details:", err);
       setError("Failed to update merchant details.");
       toast({
         title: "Error",

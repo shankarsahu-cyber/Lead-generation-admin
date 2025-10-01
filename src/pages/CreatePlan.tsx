@@ -48,7 +48,6 @@ const CreatePlan: React.FC = () => {
       const plans = await getAllPlans();
       setAllPlans(plans);
     } catch (error) {
-      console.error("Error fetching plans:", error);
       setErrorFetchingPlans("Failed to load existing plans.");
       toast({
         title: "Error",
@@ -75,12 +74,12 @@ const CreatePlan: React.FC = () => {
       try {
         await deletePlan(planToDeleteId);
         toast({
-          title: "Plan Deleted",
+          title: "Plan Deleted Successfully! 🗑️",
           description: "The plan has been successfully deleted.",
+          variant: "success",
         });
         fetchAllPlans();
       } catch (error) {
-        console.error("Error deleting plan:", error);
         toast({
           title: "Error",
           description: error instanceof Error ? error.message : "Failed to delete plan.",
@@ -107,7 +106,6 @@ const CreatePlan: React.FC = () => {
       const updatedFeatures = { ...currentFeatures, [featureName]: checked };
       setFormData(prev => ({ ...prev, features: JSON.stringify(updatedFeatures) }));
     } catch (error) {
-      console.error("Failed to parse features JSON:", error);
       toast({
         title: "Error",
         description: "Failed to update feature due to data format error.",
@@ -145,8 +143,9 @@ const CreatePlan: React.FC = () => {
       }
 
       toast({
-        title: "Plan Created Successfully",
+        title: "Plan Created Successfully! 🎉",
         description: `${formData.name} plan has been created and is now available`,
+        variant: "success",
       });
 
       setFormData({
@@ -161,7 +160,6 @@ const CreatePlan: React.FC = () => {
       });
       fetchAllPlans();
     } catch (error) {
-      console.error("Error creating plan:", error);
       toast({
         title: "Error creating plan",
         description: error instanceof Error ? error.message : "An unexpected error occurred.",

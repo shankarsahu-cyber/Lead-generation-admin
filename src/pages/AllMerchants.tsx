@@ -10,7 +10,6 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { Search, Edit, Eye } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getMerchants, updateMerchantStatus, Merchant, getAllPlans, Plan, createMerchantSubscription, getMerchantSubscriptions, assignMerchantPlan } from '../services/api';
-import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const AllMerchants: React.FC = () => {
@@ -31,7 +30,6 @@ const AllMerchants: React.FC = () => {
   const [isAssignPlanDialogOpen, setIsAssignPlanDialogOpen] = useState<boolean>(false); // State for plan assignment dialog
   const [isVoucherDialogOpen, setIsVoucherDialogOpen] = useState<boolean>(false); // New state for voucher assignment dialog
   const [selectedVoucherPlanId, setSelectedVoucherPlanId] = useState<string | null>(null); // New state for selected voucher plan
-  const { user } = useAuth(); // Keeping user here for potential future use or display logic, but not for direct token access in API calls
   // Removed states related to merchant details dialog
   const [activeMerchantPlan, setActiveMerchantPlan] = useState<Plan | null>(null);
   const [activeMerchantRegularPlan, setActiveMerchantRegularPlan] = useState<Plan | null>(null); // New state for regular plan in assign dialog
@@ -49,12 +47,28 @@ const AllMerchants: React.FC = () => {
         response.content.map(async (merchant) => {
           try {
             const subscriptions = await getMerchantSubscriptions(merchant.id);
-            console.log(`Merchant ${merchant.id}: Fetched subscriptions:`, subscriptions);
+            // First try to find active regular subscription (MONTHLY/YEARLY)
             const activeRegularSubscription = subscriptions.find(
               (sub) => sub.status === 'ACTIVE' && (sub.billingCycle === 'MONTHLY' || sub.billingCycle === 'YEARLY')
             );
-            console.log(`Merchant ${merchant.id}: Active regular subscription found:`, activeRegularSubscription);
-            return { ...merchant, activePlanName: activeRegularSubscription?.planName || 'N/A' };
+            
+            // If no regular subscription found, look for any active subscription
+            const anyActiveSubscription = subscriptions.find(
+              (sub) => sub.status === 'ACTIVE'
+            );
+            
+            const activePlan = activeRegularSubscription || anyActiveSubscription;
+            
+            // Format plan name with type indicator for addon plans
+            let displayPlanName = 'N/A';
+            if (activePlan) {
+              displayPlanName = activePlan.planName;
+              if (activePlan.billingCycle === 'ADDON' && !activeRegularSubscription) {
+                displayPlanName = `${activePlan.planName} (Add-on)`;
+              }
+            }
+            
+            return { ...merchant, activePlanName: displayPlanName };
           } catch (subErr) {
             console.error("Failed to fetch subscriptions for merchant", merchant.id, subErr);
             return { ...merchant, activePlanName: 'Error' };
@@ -157,8 +171,9 @@ const AllMerchants: React.FC = () => {
         );
         fetchAllMerchantsForStats(); // Refresh stats after status update
         toast({
-          title: "Status Updated",
+          title: "Status Updated Successfully! 🔄",
           description: `${selectedMerchant.companyName}'s status has been updated to ${newStatus}`,
+          variant: "success",
         });
         setSelectedMerchant(null);
         setNewStatus('');
@@ -188,8 +203,9 @@ const AllMerchants: React.FC = () => {
           )
         );
         toast({
-          title: "Plan Assigned",
+          title: "Plan Assigned Successfully! 🎉",
           description: `${selectedMerchant.companyName}'s plan has been assigned to ${plans.find(p => p.id === selectedPlanId)?.name}`,
+          variant: "success",
         });
         setIsAssignPlanDialogOpen(false);
         setSelectedMerchant(null);
@@ -239,8 +255,9 @@ const AllMerchants: React.FC = () => {
         await createMerchantSubscription(selectedMerchant.id, selectedVoucherPlanId);
         fetchMerchants(); // Refresh merchants to show new subscription if relevant
         toast({
-          title: "Voucher Applied",
+          title: "Voucher Applied Successfully! 🎁",
           description: `${selectedMerchant.companyName}'s voucher plan has been applied to ${plans.find(p => p.id === selectedVoucherPlanId)?.name}`,
+          variant: "success",
         });
         setIsVoucherDialogOpen(false);
         setSelectedMerchant(null);
@@ -266,26 +283,21 @@ const AllMerchants: React.FC = () => {
 
     try {
       const subscriptions = await getMerchantSubscriptions(merchant.id);
-      console.log("Voucher Dialog: Fetched subscriptions for merchant", merchant.id, ":", subscriptions);
-      console.log("Voucher Dialog: All available plans:", plans);
-      // Prioritize active MONTHLY or YEARLY plans
-      let activeSubscription = subscriptions.find(
-        (sub) => sub.status === 'ACTIVE' && (sub.billingCycle === 'MONTHLY' || sub.billingCycle === 'YEARLY')
+      
+      // Find the active subscription (prioritize MONTHLY/YEARLY)
+      let activeSubscription = subscriptions.find(sub => 
+        sub.status === 'ACTIVE' && (sub.billingCycle === 'MONTHLY' || sub.billingCycle === 'YEARLY')
       );
-      console.log("Voucher Dialog: Attempted to find active MONTHLY/YEARLY subscription:", activeSubscription);
-
-      // If no active MONTHLY/YEARLY plan, find any active subscription (e.g., an ADDON that might be active)
+      
+      // If no MONTHLY/YEARLY subscription found, look for any active subscription
       if (!activeSubscription) {
-        activeSubscription = subscriptions.find((sub) => sub.status === 'ACTIVE');
-        console.log("Voucher Dialog: Falling back to any active subscription:", activeSubscription);
+        activeSubscription = subscriptions.find(sub => sub.status === 'ACTIVE');
       }
-
+      
       if (activeSubscription) {
-        const activePlan = plans.find(p => p.name === activeSubscription.planName);
-        console.log("Voucher Dialog: Matched Plan object for active subscription:", activePlan);
+        const activePlan = plans.find(plan => plan.name === activeSubscription.planName);
         setActiveMerchantPlan(activePlan || null);
       } else {
-        console.log("Voucher Dialog: No active subscription found.");
         setActiveMerchantPlan(null);
       }
     } catch (err) {
@@ -306,19 +318,14 @@ const AllMerchants: React.FC = () => {
 
     try {
       const subscriptions = await getMerchantSubscriptions(merchant.id);
-      console.log("Assign Plan Dialog: Fetched subscriptions for merchant", merchant.id, ":", subscriptions);
-      console.log("Assign Plan Dialog: All available plans:", plans);
       const activeRegularSubscription = subscriptions.find(
         (sub) => sub.status === 'ACTIVE' && (sub.billingCycle === 'MONTHLY' || sub.billingCycle === 'YEARLY')
       );
-      console.log("Assign Plan Dialog: Identified active regular subscription:", activeRegularSubscription);
 
       if (activeRegularSubscription) {
         const activePlan = plans.find(p => p.name === activeRegularSubscription.planName);
-        console.log("Assign Plan Dialog: Matched Plan object for active regular subscription:", activePlan);
         setActiveMerchantRegularPlan(activePlan || null);
       } else {
-        console.log("Assign Plan Dialog: No active MONTHLY/YEARLY subscription found.");
         setActiveMerchantRegularPlan(null);
       }
     } catch (err) {
