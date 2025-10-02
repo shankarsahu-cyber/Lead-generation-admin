@@ -20,7 +20,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://13.234.225.69:8888';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://15.206.69.231:8888';
 
 const CreatePlan: React.FC = () => {
   const { toast } = useToast();
