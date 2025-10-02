@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 /* Wider form for CreatePlan page only */
 .createplanform-wide .simple-form {
   max-width: 1400px;
@@ -57,81 +59,83 @@
 .simple-form button[type="submit"]:hover {
   background: #217dbb;
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Lead Management Dashboard Design System */
+/* Modern SaaS Dashboard Design System - Sky Blue Theme */
 
 @layer base {
   :root {
-    /* Core Brand Colors - Light theme: Light Blue & White */
-    --background: 0 0% 100%; /* White background */
-    --foreground: 220 30% 20%; /* Dark navy text */
+    /* Core Brand Colors - Sky Blue & White Theme */
+    --background: 0 0% 100%; /* Pure white background */
+    --foreground: 215 25% 27%; /* Professional dark gray text */
 
     /* Cards & Surfaces */
     --card: 0 0% 100%; /* White cards */
-    --card-foreground: 220 30% 20%; /* Dark navy text on cards */
+    --card-foreground: 215 25% 27%; /* Professional dark gray text on cards */
 
     --popover: 0 0% 100%; /* White popovers */
-    --popover-foreground: 220 30% 20%; /* Dark navy text on popovers */
+    --popover-foreground: 215 25% 27%; /* Professional dark gray text on popovers */
 
-    /* Brand Primary - Light Blue */
-    --primary: 200 70% 60%; /* Vibrant light blue */
+    /* Brand Primary - Sky Blue (#38bdf8 / sky-400) */
+    --primary: 199 89% 48%; /* Sky blue primary */
     --primary-foreground: 0 0% 100%; /* White text on primary */
-    --primary-glow: 200 70% 70%; /* Lighter light blue for glow */
+    --primary-glow: 199 89% 58%; /* Lighter sky blue for glow */
 
-    /* Secondary - Lighter Light Blue Accent */
-    --secondary: 200 70% 90%; /* Lighter light blue */
-    --secondary-foreground: 220 30% 20%; /* Dark navy text on secondary */
+    /* Secondary - Light Sky Blue */
+    --secondary: 199 89% 95%; /* Very light sky blue */
+    --secondary-foreground: 215 25% 27%; /* Dark gray text on secondary */
 
     /* Subtle Backgrounds */
-    --muted: 200 10% 95%; /* Very light blue/gray */
-    --muted-foreground: 220 20% 50%; /* Medium dark text */
+    --muted: 210 20% 98%; /* Very light gray */
+    --muted-foreground: 215 16% 47%; /* Medium gray text */
 
     /* Accent Colors */
-    --accent: 200 70% 90%; /* Lighter light blue */
-    --accent-foreground: 220 30% 20%; /* Dark navy text on accent */
+    --accent: 199 89% 95%; /* Light sky blue accent */
+    --accent-foreground: 215 25% 27%; /* Dark gray text on accent */
 
-    /* Status Colors - Keep distinct, adjust foregrounds for readability */
-    --destructive: 0 80% 50%; /* Red for errors */
+    /* Status Colors - Modern SaaS style */
+    --destructive: 0 84% 60%; /* Modern red for errors */
     --destructive-foreground: 0 0% 100%; /* White text on error */
-    --success: 120 80% 40%; /* Green for success */
+    --success: 142 76% 36%; /* Modern green for success */
     --success-foreground: 0 0% 100%; /* White text on success */
-    --warning: 45 80% 50%; /* Yellow for warning */
+    --warning: 45 93% 47%; /* Modern amber for warning */
     --warning-foreground: 0 0% 100%; /* White text on warning */
-    --info: 210 80% 50%; /* Blue for info */
+    --info: 199 89% 48%; /* Sky blue for info */
     --info-foreground: 0 0% 100%; /* White text on info */
 
     /* Borders & Inputs */
-    --border: 200 15% 85%; /* Light gray-blue border */
-    --input: 200 15% 85%; /* Light gray-blue input border */
-    --ring: 200 70% 60%; /* Primary light blue ring */
+    --border: 214 32% 91%; /* Light gray border */
+    --input: 214 32% 91%; /* Light gray input border */
+    --ring: 199 89% 48%; /* Sky blue ring */
 
     --radius: 0.5rem;
 
-    /* Gradients - Light Blue Shades */
-    --gradient-primary: linear-gradient(135deg, hsl(200 70% 60%), hsl(200 75% 70%)); /* Light blue gradient */
-    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(200 10% 98%)); /* Subtle light blue gradient for cards */
+    /* Gradients - Sky Blue Shades */
+    --gradient-primary: linear-gradient(135deg, hsl(199 89% 48%), hsl(199 89% 58%)); /* Sky blue gradient */
+    --gradient-card: linear-gradient(145deg, hsl(var(--card)), hsl(210 20% 98%)); /* Subtle gradient for cards */
     
-    /* Shadows */
-    --shadow-elegant: 0 10px 30px -10px hsl(200 70% 60% / 0.3); /* Light blue shadow */
-    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.1); /* Standard card shadow */
+    /* Shadows - Modern SaaS style */
+    --shadow-elegant: 0 10px 30px -10px hsl(199 89% 48% / 0.15); /* Sky blue shadow */
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1); /* Modern card shadow */
+    --shadow-hover: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1); /* Hover shadow */
     
     /* Dashboard Specific */
-    --dashboard-stat: 142 76% 36%; /* Keep green */
-    --dashboard-warning: 38 92% 50%; /* Keep yellow */
-    --dashboard-info: 200 70% 60%; /* Light blue for info */
+    --dashboard-stat: 142 76% 36%; /* Green for stats */
+    --dashboard-warning: 45 93% 47%; /* Amber for warnings */
+    --dashboard-info: 199 89% 48%; /* Sky blue for info */
 
-    /* Sidebar - Vibrant Blue */
-    --sidebar-background: 220 80% 30%; /* Vibrant blue for sidebar */
-    --sidebar-foreground: 0 0% 100%; /* White text on sidebar */
-    --sidebar-primary: 220 90% 50%; /* Lighter vibrant blue for sidebar primary */
-    --sidebar-primary-foreground: 0 0% 100%; /* White text on sidebar primary */
-    --sidebar-accent: 220 70% 40%; /* Slightly lighter vibrant blue for sidebar accent */
-    --sidebar-accent-foreground: 0 0% 100%; /* White text on sidebar accent */
-    --sidebar-border: 220 70% 20%; /* Darker vibrant blue for sidebar border */
-    --sidebar-ring: 220 90% 50%; /* Lighter vibrant blue ring */
+    /* Sidebar - White with Sky Blue Accents */
+    --sidebar-background: 0 0% 100%; /* White sidebar background */
+    --sidebar-foreground: 215 16% 47%; /* Medium gray text */
+    --sidebar-primary: 199 89% 48%; /* Sky blue for active items */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on active items */
+    --sidebar-accent: 199 89% 95%; /* Light sky blue for hover */
+    --sidebar-accent-foreground: 199 89% 48%; /* Sky blue text on hover */
+    --sidebar-border: 214 32% 91%; /* Light gray border */
+    --sidebar-ring: 199 89% 48%; /* Sky blue ring */
   }
 
   .dark {
@@ -199,9 +203,52 @@
     margin: 0;
     padding: 0;
     overflow-x: hidden; /* Ensure no horizontal scrollbar */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   }
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    font-variation-settings: normal;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Modern typography scale */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+  }
+
+  h1 { font-size: 2.25rem; font-weight: 600; }
+  h2 { font-size: 1.875rem; font-weight: 600; }
+  h3 { font-size: 1.5rem; font-weight: 500; }
+  h4 { font-size: 1.25rem; font-weight: 500; }
+  h5 { font-size: 1.125rem; font-weight: 500; }
+  h6 { font-size: 1rem; font-weight: 500; }
+
+  p {
+    line-height: 1.6;
+    color: hsl(var(--foreground));
+  }
+
+  /* Modern button styles */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-primary border border-primary hover:bg-primary/5 px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
+
+  /* Modern card styles */
+  .card-modern {
+    @apply bg-card border border-border rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5;
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
