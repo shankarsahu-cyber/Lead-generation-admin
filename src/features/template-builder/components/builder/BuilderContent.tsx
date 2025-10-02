@@ -377,7 +377,7 @@ export const BuilderContent = ({
                 />
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {currentFields.map((field) => (
                   <FieldCard
                     key={field.fieldId}
@@ -515,16 +515,16 @@ const FieldCard = ({
   // Special handling for image upload fields
   if (field.type === 'image_upload') {
     return (
-      <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-        <CardHeader className="pb-3 p-3 sm:p-6">
+      <Card className="hover:shadow-md transition-shadow cursor-pointer group w-full">
+        <CardHeader className="pb-2 p-2 sm:p-4">
           <div className="flex items-center justify-between w-full">
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               {field.imageUrl ? (
-                <div className="relative w-12 sm:w-16 h-12 sm:h-16 flex-shrink-0 rounded-lg overflow-hidden border">
+                <div className="relative w-10 sm:w-12 h-10 sm:h-12 flex-shrink-0 rounded-lg overflow-hidden border">
                   <img src={field.imageUrl} alt={field.imageName || field.label} className="w-full h-full object-cover" />
                 </div>
               ) : (
-                <div className="p-2 bg-primary/10 rounded-lg">
+                <div className="p-1.5 bg-primary/10 rounded-lg">
                   <Icon className="h-3 sm:h-4 w-3 sm:w-4 text-primary" />
                 </div>
               )}
@@ -576,7 +576,7 @@ const FieldCard = ({
           )}
         </CardHeader>
         
-        <CardContent className="pt-0 p-3 sm:p-6" onClick={onSelect}>
+        <CardContent className="pt-0 p-2 sm:p-4" onClick={onSelect}>
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex gap-1 flex-wrap">
               {field.required && (
@@ -597,11 +597,11 @@ const FieldCard = ({
   
   // Consistent card layout for all other field types
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer group">
-      <CardHeader className="pb-3 p-3 sm:p-6">
+    <Card className="hover:shadow-md transition-shadow cursor-pointer group w-full">
+      <CardHeader className="pb-2 p-2 sm:p-4">
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-            <div className="p-2 sm:p-3 bg-primary/10 rounded-lg">
+            <div className="p-1.5 sm:p-2 bg-primary/10 rounded-lg">
               <Icon className="h-4 sm:h-5 w-4 sm:w-5 text-primary" />
             </div>
             <div className="min-w-0 flex-1">
@@ -643,7 +643,7 @@ const FieldCard = ({
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0 p-3 sm:p-6" onClick={onSelect}>
+      <CardContent className="pt-0 p-2 sm:p-4" onClick={onSelect}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex gap-1 sm:gap-2 flex-wrap">
             {field.required && (
@@ -665,7 +665,7 @@ const FieldCard = ({
       </CardContent>
       
       {/* Render input element for preview/interaction */}
-      <CardContent className="pt-0 border-t mt-2 sm:mt-4 p-3 sm:p-6">
+      <CardContent className="pt-0 border-t mt-1 sm:mt-2 p-2 sm:p-4">
         <div className="py-2">
           {field.type === 'text' && (
             <Input
