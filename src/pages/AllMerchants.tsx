@@ -80,6 +80,7 @@ const AllMerchants: React.FC = () => {
       );
       setMerchants(merchantsWithActivePlans);
       setTotalPages(response.totalPages);
+      return response; // Return the response for use in useEffect
     } catch (err) {
       console.error("Failed to fetch merchants:", err, (err as any).response?.data);
       setError("Failed to load merchants.");
@@ -88,21 +89,13 @@ const AllMerchants: React.FC = () => {
         description: "Failed to load merchants data.",
         variant: "destructive",
       });
+      return null;
     } finally {
       setLoading(false);
     }
   }, [page, size, searchTerm, toast]);
 
-  const fetchAllMerchantsForStats = useCallback(async () => {
-    try {
-      // Fetch all merchants for statistics, no pagination or specific status filter
-      const response = await getMerchants(undefined, undefined, undefined, 0, 1000); // Fetch a large number or adjust size as needed
-      setAllMerchantsForStats(response.content);
-    } catch (err) {
-      console.error("Failed to fetch all merchants for stats:", err, (err as any).response?.data);
-      // Optionally set an error state or toast for stats fetching
-    }
-  }, []);
+  // Removed separate fetchAllMerchantsForStats function to avoid duplicate API calls
 
   const fetchPlans = useCallback(async () => {
     try {
@@ -119,10 +112,14 @@ const AllMerchants: React.FC = () => {
   }, [toast]);
 
   useEffect(() => {
-    fetchMerchants();
-    fetchAllMerchantsForStats(); // Fetch all merchants for stats on initial mount
+    fetchMerchants().then(response => {
+      // Use the same data for stats
+      if (response && response.content) {
+        setAllMerchantsForStats(response.content);
+      }
+    });
     fetchPlans(); // Fetch plans on initial mount
-  }, [fetchMerchants, fetchAllMerchantsForStats, fetchPlans]);
+  }, [fetchMerchants, fetchPlans]);
 
   const handlePageChange = (pageNumber: number) => {
     if (pageNumber >= 0 && pageNumber < totalPages) {
@@ -172,7 +169,10 @@ const AllMerchants: React.FC = () => {
             merchant.id === selectedMerchant.id ? { ...merchant, status: newStatus as any } : merchant
           )
         );
-        fetchAllMerchantsForStats(); // Refresh stats after status update
+        // Use the updated merchants data for stats
+        setAllMerchantsForStats(prevMerchants.map(m => 
+          m.id === selectedMerchant.id ? { ...m, status: newStatus as any } : m
+        ));
         toast({
           title: "Status Updated Successfully! 🔄",
           description: `${selectedMerchant.companyName}'s status has been updated to ${newStatus}`,

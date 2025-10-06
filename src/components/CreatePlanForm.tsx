@@ -124,7 +124,7 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
         </div>
         
         <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Leads Per Month</label>
+          <label className="block font-medium text-sm sm:text-base">Max Leads</label>
           <input
             type="number"
             value={formData.maxLeadsPerMonth}
