@@ -170,9 +170,11 @@ const AllMerchants: React.FC = () => {
           )
         );
         // Use the updated merchants data for stats
-        setAllMerchantsForStats(prevMerchants.map(m => 
-          m.id === selectedMerchant.id ? { ...m, status: newStatus as any } : m
-        ));
+        setAllMerchantsForStats((prevMerchantsForStats) =>
+          prevMerchantsForStats.map(m => 
+            m.id === selectedMerchant.id ? { ...m, status: newStatus as any } : m
+          )
+        );
         toast({
           title: "Status Updated Successfully! 🔄",
           description: `${selectedMerchant.companyName}'s status has been updated to ${newStatus}`,
