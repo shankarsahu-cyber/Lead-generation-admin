@@ -84,7 +84,7 @@ export const BuilderSidebar = ({
             type: level === 2 ? 'field' : 'subfield',
             label: field.label,
             parent: parentId,
-            children: field.subFields.map(subField => `${fieldId}.${subField.fieldId}`),
+            children: field.subFields ? field.subFields.map(subField => `${fieldId}.${subField.fieldId}`) : [],
             level,
             stepId: step.stepId,
             fieldId: field.fieldId,
@@ -93,7 +93,7 @@ export const BuilderSidebar = ({
           newNodes.set(fieldId, fieldNode);
 
           // Add sub-field nodes recursively
-          if (field.subFields.length > 0) {
+          if (field.subFields && field.subFields.length > 0) {
             addFieldNodes(field.subFields, fieldId, level + 1, fieldId);
           }
         });
@@ -201,98 +201,113 @@ export const BuilderSidebar = ({
       <div key={nodeId}>
         <div
           className={cn(
-            "flex items-center gap-1 px-2 py-1.5 cursor-pointer hover:bg-muted/50 rounded-sm group transition-colors text-sm",
-            isSelected && "bg-primary/10 text-primary font-medium"
+            "relative flex items-center gap-1 px-2 py-1.5 cursor-pointer hover:bg-muted/70 rounded-md group transition-all duration-200 text-sm",
+            isSelected && "bg-primary/10 text-primary font-medium",
+            node.type === 'step' && node.id !== 'root' && "hover:shadow-sm"
           )}
           onClick={() => handleNodeClick(nodeId)}
         >
-          <IndentComponent />
-          
-          {hasChildren && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-4 w-4 p-0 flex-shrink-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleExpanded(nodeId);
-              }}
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-3 w-3" />
-              ) : (
-                <ChevronRight className="h-3 w-3" />
-              )}
-            </Button>
-          )}
-          
-          {!hasChildren && <div className="w-4 flex-shrink-0" />}
-          
-          <div className="flex items-center gap-1.5 flex-1 min-w-0">
-            {node.type === 'step' ? (
-              isExpanded ? <FolderOpen className="h-3.5 w-3.5 text-primary flex-shrink-0" /> : <Folder className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-            ) : (
-              <FileText className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-            )}
-            {node.type === 'step' && editingNodeId === node.id ? (
-              <input
-                type="text"
-                value={node.label}
-                onChange={(e) => {
-                  const newTitle = e.target.value;
-                  onStepTitleChange(node.id, newTitle);
-                }}
-                onBlur={() => setEditingNodeId(null)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    setEditingNodeId(null);
-                  }
-                }}
-                onClick={(e) => e.stopPropagation()} // Prevent node click when editing
-                className="flex-1 bg-transparent text-xs sm:text-sm truncate border-b border-primary-foreground focus:outline-none focus:border-primary min-w-0"
-                autoFocus
-              />
-            ) : (
-              <span 
-                className="text-xs sm:text-sm truncate flex-1 min-w-0"
-                onDoubleClick={(e) => {
-                  if (node.type === 'step') {
-                    e.stopPropagation();
-                    setEditingNodeId(node.id);
-                  }
-                }}
-              >
-                {node.label}
-              </span>
-            )}
-          </div>
-          {node.type === 'step' && node.id !== 'root' && (
-            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Main Content - Left side with proper padding for icons */}
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1 pr-20">
+            <IndentComponent />
+            
+            {hasChildren && (
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-5 w-5 p-0"
+                className="h-4 w-4 p-0 flex-shrink-0"
                 onClick={(e) => {
                   e.stopPropagation();
+                  toggleExpanded(nodeId);
+                }}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-3 w-3" />
+                ) : (
+                  <ChevronRight className="h-3 w-3" />
+                )}
+              </Button>
+            )}
+            
+            {!hasChildren && <div className="w-4 flex-shrink-0" />}
+            
+            {/* Icon */}
+            <div className="flex-shrink-0">
+              {node.type === 'step' ? (
+                isExpanded ? (
+                  <FolderOpen className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                ) : (
+                  <Folder className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                )
+              ) : (
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
+              )}
+            </div>
+            
+            {/* Label */}
+            <div className="min-w-0 flex-1">
+              {node.type === 'step' && editingNodeId === node.id ? (
+                <input
+                  type="text"
+                  value={node.label}
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    onStepTitleChange(node.id, newTitle);
+                  }}
+                  onBlur={() => setEditingNodeId(null)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setEditingNodeId(null);
+                    }
+                  }}
+                  onClick={(e) => e.stopPropagation()} // Prevent node click when editing
+                  className="w-full bg-transparent text-xs sm:text-sm border-b border-primary-foreground focus:outline-none focus:border-primary"
+                  autoFocus
+                />
+              ) : (
+                <span 
+                  className="text-xs sm:text-sm block truncate"
+                  onDoubleClick={(e) => {
+                    if (node.type === 'step') {
+                      e.stopPropagation();
+                      setEditingNodeId(node.id);
+                    }
+                  }}
+                >
+                  {node.label}
+                </span>
+              )}
+            </div>
+          </div>
+          
+          {/* Absolutely Positioned Icons - Always Fixed on Right */}
+          {node.type === 'step' && node.level > 0 && (
+            <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-md p-1">
+              <Button
+                variant="default"
+                size="sm"
+                className="h-6 w-6 p-1 text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
                   setEditingNodeId(node.id);
                 }}
                 aria-label={`Edit step ${node.label}`}
-                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
-                <Edit2 className="h-2.5 w-2.5" />
+                <Edit2 className="h-3 w-3" />
               </Button>
               <Button
-                variant="ghost"
+                variant="default"
                 size="sm"
-                className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                className="h-6 w-6 p-1 text-white bg-red-600 hover:bg-red-700 rounded-md shadow-sm"
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   handleDeleteStep(node.id);
                 }}
                 aria-label={`Delete step ${node.label}`}
-                disabled={!isFormDetailsComplete} // Disable if form details are not complete
               >
-                <Trash2 className="h-2.5 w-2.5" />
+                <Trash2 className="h-3 w-3" />
               </Button>
             </div>
           )}

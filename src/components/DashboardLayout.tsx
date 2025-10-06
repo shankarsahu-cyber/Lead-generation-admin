@@ -1,13 +1,11 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { useSidebar } from '../contexts/SidebarContext';
 import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 const DashboardLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
-  const closeSidebar = () => setSidebarOpen(false);
+  const { sidebarOpen, toggleSidebar, closeSidebar } = useSidebar();
 
   return (
     <div className="min-h-screen bg-background">

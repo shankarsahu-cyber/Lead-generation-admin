@@ -186,6 +186,9 @@ export const FormPreview = ({
 
       case 'file_upload':
       case 'image_upload':
+        const uploadedFile = formValues[fieldKey];
+        const imagePreviewUrl = uploadedFile instanceof File ? URL.createObjectURL(uploadedFile) : null;
+        
         return (
           <div key={field.fieldId} className="space-y-2">
             <Label htmlFor={fieldKey}>
@@ -201,6 +204,35 @@ export const FormPreview = ({
                 onFormValuesChange({ ...formValues, [fieldKey]: file });
               }}
             />
+            {/* Image Preview */}
+            {field.type === 'image_upload' && imagePreviewUrl && (
+              <div className="mt-3">
+                <div className="relative inline-block">
+                  <img 
+                    src={imagePreviewUrl} 
+                    alt={`Preview of ${field.label}`}
+                    className="max-w-xs max-h-48 object-contain border rounded-lg shadow-sm"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2 h-6 w-6 p-0"
+                    onClick={() => {
+                      onFormValuesChange({ ...formValues, [fieldKey]: null });
+                      // Clear the file input
+                      const fileInput = document.getElementById(fieldKey) as HTMLInputElement;
+                      if (fileInput) fileInput.value = '';
+                    }}
+                  >
+                    ×
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {uploadedFile.name} ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                </p>
+              </div>
+            )}
           </div>
         );
 

@@ -36,7 +36,7 @@ export const uploadImage = async (file: File, toast: (props: ToastFunctionProps)
     // const token = user?.token;
 
     const response = await apiClient.post(
-      `/uploads/file`,
+      `/admin/uploads/file`,
       formData,
       {
         headers: {
@@ -98,12 +98,10 @@ export const updateTemplate = async (templateId: number, formData: FormData, toa
       ? formData.category as TemplateCategory 
       : 'GENERIC';
     
-    const categoryId = getCategoryId(validCategory);
-
     const apiFormData: APIFormData = {
       name: formData.name,
       description: formData.description,
-      category: categoryId, // Use numeric category ID
+      category: validCategory, // Use string category directly
       formPayload: JSON.stringify(formData),
       isActive: true,
       id: templateId
@@ -149,7 +147,7 @@ import type { FormData } from '../types/template-builder';
 interface APIFormData {
   name: string;
   description: string;
-  category: number; // Changed to number for backend compatibility
+  category: string; // Use string category for backend compatibility
   formPayload: string;
   isActive: boolean;
   id?: number; // Add optional id field
@@ -310,12 +308,10 @@ export const saveTemplate = async (formData: FormData, toast: (props: ToastFunct
       settings: formData.settings,
     };
 
-    const categoryId = getCategoryId(validCategory);
-
     const apiFormData: APIFormData = {
       name: formData.name,
       description: formData.description,
-      category: categoryId, // Use numeric category ID
+      category: validCategory, // Use string category directly
       formPayload: JSON.stringify(innerFormPayload), // Stringify the constructed object
       isActive: true, // Default to active
     };
@@ -376,7 +372,7 @@ export const getAllForms = async (toast: (props: ToastFunctionProps) => void, ca
   try {
     const response = await apiClient.get<AllTemplatesResponse>(`/admin/templates`, {
       params: {
-        ...(category && { category: getCategoryId(category) }), // Send numeric category ID
+        ...(category && { category: category }), // Send string category directly
       },
     });
 
@@ -388,7 +384,7 @@ export const getAllForms = async (toast: (props: ToastFunctionProps) => void, ca
           id: apiForm.id, // Assign backend's numerical ID
           name: apiForm.name,
           description: apiForm.description,
-          category: getCategoryFromId(apiForm.category), // Convert numeric category ID to string
+          category: apiForm.category, // Use string category directly
           formId: (formPayload as any).formId || String(apiForm.id) || apiForm.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') // Ensure formId is a string
         };
       } catch (parseError) {

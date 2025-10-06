@@ -43,10 +43,10 @@ export const FieldEditor = ({
       if (!parentField) return null;
       
       if (path.length === 1) {
-        return parentField.subFields.find(f => f.fieldId === fieldId) || null;
+        return parentField.subFields ? parentField.subFields.find(f => f.fieldId === fieldId) || null : null;
       }
       
-      return getField(parentField.subFields, path.slice(1));
+      return parentField.subFields ? getField(parentField.subFields, path.slice(1)) : null;
     };
 
     const foundField = getField(step.fields, selectedFieldPath);
@@ -66,12 +66,12 @@ export const FieldEditor = ({
           if (path.length === 1) {
             return {
               ...f,
-              subFields: f.subFields.map(sf => sf.fieldId === fieldId ? field : sf)
+              subFields: f.subFields ? f.subFields.map(sf => sf.fieldId === fieldId ? field : sf) : []
             };
           } else {
             return {
               ...f,
-              subFields: updateField(f.subFields, path.slice(1))
+              subFields: f.subFields ? updateField(f.subFields, path.slice(1)) : []
             };
           }
         }
@@ -223,18 +223,33 @@ export const FieldEditor = ({
               
               <div className="space-y-3">
                 {(field.options || []).map((option, index) => (
-                  <div key={option.optionId} className="flex gap-2 items-start">
-                    <div className="flex-1 grid grid-cols-3 gap-2">
-                      <Input
-                        placeholder="Option label"
-                        value={option.label}
-                        onChange={(e) => updateOption(index, { label: e.target.value })}
-                      />
-                      <Input
-                        placeholder="Option value"
-                        value={option.value}
-                        onChange={(e) => updateOption(index, { value: e.target.value })}
-                      />
+                  <div key={option.optionId} className="space-y-2">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-1 grid grid-cols-2 gap-2">
+                        <Input
+                          placeholder="Option label"
+                          value={option.label}
+                          onChange={(e) => updateOption(index, { label: e.target.value })}
+                        />
+                        <Input
+                          placeholder="Option value"
+                          value={option.value}
+                          onChange={(e) => updateOption(index, { value: e.target.value })}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeOption(index)}
+                        className="h-10 w-10 p-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    {/* Navigation Options */}
+                    <div className="grid grid-cols-2 gap-2 ml-0">
                       <Select
                         value={option.nextStepId || ''}
                         onValueChange={(value) => updateOption(index, { nextStepId: value || undefined })}
@@ -243,6 +258,7 @@ export const FieldEditor = ({
                           <SelectValue placeholder="Go to step..." />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="">No step navigation</SelectItem>
                           {allSteps.map(s => (
                             <SelectItem key={s.stepId} value={s.stepId}>
                               {s.title}
@@ -250,27 +266,25 @@ export const FieldEditor = ({
                           ))}
                         </SelectContent>
                       </Select>
+                      
+                      <Select
+                        value={option.nextFieldId || ''}
+                        onValueChange={(value) => updateOption(index, { nextFieldId: value || undefined })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Go to field..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No field navigation</SelectItem>
+                          {step.fields.map(f => (
+                            <SelectItem key={f.fieldId} value={f.fieldId}>
+                              {f.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    
-                    {/* {field.type === 'image_select' && (
-                      <div className="flex-1">
-                        <ImageUpload
-                          value={option.imageUrl || ''}
-                          onChange={(url) => updateOption(index, { imageUrl: url })}
-                        />
-                      </div>
-                    )} */}
-                    
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeOption(index)}
-                      className="h-10 w-10 p-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                   </div>
                 ))}
               </div>
             </div>

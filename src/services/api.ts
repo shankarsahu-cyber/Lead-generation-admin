@@ -13,12 +13,18 @@ export const apiClient = axios.create({
 // Request interceptor to attach the authentication token
 apiClient.interceptors.request.use(
   (config) => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      if (user?.token) {
-        config.headers.Authorization = `Bearer ${user.token}`;
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        if (user?.token) {
+          config.headers.Authorization = `Bearer ${user.token}`;
+        }
       }
+    } catch (error) {
+      // If there's an error parsing user data, clear it
+      console.warn('Error parsing user data from localStorage:', error);
+      localStorage.removeItem('user');
     }
     return config;
   },
@@ -32,57 +38,86 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // Refresh token on 401 (Unauthorized) or 403 (Forbidden)
+    
+    // Attempt refresh for both 401 Unauthorized and 403 Forbidden errors and avoid infinite loops
     if (
       error.response &&
       (error.response.status === 401 || error.response.status === 403) &&
-      !originalRequest._retry
+      !originalRequest._retry &&
+      originalRequest.url !== '/auth/refresh' // Don't retry refresh endpoint itself
     ) {
       originalRequest._retry = true;
+      
       try {
         const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-          const user = JSON.parse(storedUser);
-          const refreshUrl = 'http://15.206.69.231/api/auth/refresh';
-          // Debug log
-          console.log('Attempting token refresh with refreshToken:', user.refreshToken);
-          const refreshResponse = await axios.post(refreshUrl, {
-            refreshToken: user.refreshToken,
-          });
-          // The token is inside refreshResponse.data.data.token
-          if (refreshResponse.data && refreshResponse.data.data && refreshResponse.data.data.token) {
-            // Update token in localStorage
-            user.token = refreshResponse.data.data.token;
-            localStorage.setItem('user', JSON.stringify(user));
-            // Update Authorization header and retry original request
-            originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
-            // Also update default header for future requests
-            apiClient.defaults.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
-            console.log('Token refreshed successfully. Retrying original request.');
-            return apiClient(originalRequest);
-          } else if (
-            refreshResponse.data &&
-            refreshResponse.data.error &&
-            typeof refreshResponse.data.error === 'string' &&
-            refreshResponse.data.error.toLowerCase().includes('invalid refresh token')
-          ) {
-            // If refresh token is invalid, logout user and redirect
-            console.error('Invalid refresh token, logging out.');
-            localStorage.removeItem('user');
-            window.location.href = '/login';
-            return Promise.reject(new Error('Invalid refresh token'));
-          } else {
-            console.error('Refresh API did not return a new token:', refreshResponse.data);
-          }
+        if (!storedUser) {
+          // No user data, redirect to login
+          window.location.href = '/login';
+          return Promise.reject(error);
         }
-      } catch (refreshError) {
-        // If refresh fails, logout user
-        console.error('Token refresh failed:', refreshError);
+
+        const user = JSON.parse(storedUser);
+        if (!user.refreshToken) {
+          // No refresh token available, redirect to login
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return Promise.reject(error);
+        }
+
+        console.log('Access token expired or forbidden (401/403), attempting refresh...');
+        const refreshUrl = 'http://15.206.69.231:8888/api/auth/refresh';
+        
+        const refreshResponse = await axios.post(refreshUrl, {
+          refreshToken: user.refreshToken,
+        });
+
+        // Check if refresh was successful
+        if (refreshResponse.data && refreshResponse.data.success && refreshResponse.data.data && refreshResponse.data.data.token) {
+          // Update token in localStorage
+          user.token = refreshResponse.data.data.token;
+          
+          // Update refresh token if provided
+          if (refreshResponse.data.data.refreshToken) {
+            user.refreshToken = refreshResponse.data.data.refreshToken;
+          }
+          
+          localStorage.setItem('user', JSON.stringify(user));
+          
+          // Update Authorization header for the retry request
+          originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
+          
+          console.log('Token refreshed successfully. Retrying original request.');
+          
+          // Retry the original request with new token
+          return apiClient(originalRequest);
+        } else {
+          // Refresh response indicates failure
+          console.error('Token refresh failed - invalid response:', refreshResponse.data);
+          localStorage.removeItem('user');
+          window.location.href = '/login';
+          return Promise.reject(new Error('Token refresh failed'));
+        }
+        
+      } catch (refreshError: any) {
+        console.error('Token refresh error:', refreshError);
+        
+        // Check if refresh token is invalid/expired
+        if (
+          refreshError.response &&
+          (refreshError.response.status === 401 || refreshError.response.status === 403)
+        ) {
+          console.error('Refresh token is invalid/expired, logging out.');
+        } else {
+          console.error('Network or other error during token refresh.');
+        }
+        
+        // Clear user data and redirect to login
         localStorage.removeItem('user');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
     }
+    
     return Promise.reject(error);
   }
 );
@@ -257,18 +292,7 @@ export type AllPlansResponse = GenericApiResponse<Plan[]>;
 
 export const createPlan = async (planData: any): Promise<PlanCreationResponse> => {
   try {
-    const storedUser = localStorage.getItem('user');
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    const token = user?.token;
-
-    // Construct the full URL to bypass the apiClient's /admin base URL for this specific endpoint
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/plans`;
-
-    const response = await axios.post<PlanCreationResponse>(fullUrl, planData, {
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    });
+    const response = await apiClient.post<PlanCreationResponse>('/plans', planData);
     return response.data;
   } catch (error) {
     console.error("Failed to create plan:", error);
@@ -278,18 +302,7 @@ export const createPlan = async (planData: any): Promise<PlanCreationResponse> =
 
 export const getAllPlans = async (): Promise<Plan[]> => {
   try {
-    const storedUser = localStorage.getItem('user');
-    const user = storedUser ? JSON.parse(storedUser) : null;
-    const token = user?.token;
-
-    // Construct the full URL to bypass the apiClient's /admin base URL for this specific endpoint
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/plans`;
-
-    const response = await axios.get<AllPlansResponse>(fullUrl, { // Changed to axios.get with fullUrl
-      headers: {
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    });
+    const response = await apiClient.get<AllPlansResponse>('/plans');
     return response.data.data; // Assuming 'data' field contains an array of plans
   } catch (error) {
     console.error("Failed to fetch all plans:", error);
@@ -322,10 +335,8 @@ export const updateMerchantPlan = async (merchantId: string, planId: string): Pr
 
 export const createMerchantSubscription = async (merchantId: string, planId: string): Promise<Subscription> => {
   try {
-    // Construct the full URL for addon subscriptions
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/addons`;
     // Expecting a direct Subscription object response, not a GenericApiResponse wrapper
-    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, planId });
+    const response = await apiClient.post<Subscription>('/subscriptions/addons', { merchantId, planId });
     
     // No success check needed if the API returns a 2xx status with the data directly
     // If the backend returns a non-2xx status, Axios will throw an error, which the catch block handles
@@ -373,8 +384,7 @@ export const getMerchantSubscriptions = async (merchantId: string): Promise<Subs
 
 export const assignMerchantPlan = async (merchantId: string, planId: string): Promise<Subscription> => {
   try {
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions`;
-    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, planId });
+    const response = await apiClient.post<Subscription>('/subscriptions', { merchantId, planId });
     return response.data;
   } catch (error) {
     console.error("Failed to assign merchant plan:", error);
@@ -384,8 +394,7 @@ export const assignMerchantPlan = async (merchantId: string, planId: string): Pr
 
 export const updateSubscriptionStatus = async (subscriptionId: string, status: 'ACTIVE' | 'INACTIVE' | 'CANCELLED'): Promise<Subscription> => {
   try {
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/${subscriptionId}/status`;
-    const response = await apiClient.put<Subscription>(fullUrl, { status });
+    const response = await apiClient.put<Subscription>(`/subscriptions/${subscriptionId}/status`, { status });
     return response.data;
   } catch (error) {
     console.error("Failed to update subscription status:", error);
@@ -395,11 +404,50 @@ export const updateSubscriptionStatus = async (subscriptionId: string, status: '
 
 export const forceActivateSubscription = async (subscriptionId: string, merchantId: string, notes: string): Promise<Subscription> => {
   try {
-    const fullUrl = `${apiClient.defaults.baseURL?.replace('/admin', '')}/subscriptions/force-activate`;
-    const response = await apiClient.post<Subscription>(fullUrl, { merchantId, subscriptionId, notes });
+    const response = await apiClient.post<Subscription>('/subscriptions/force-activate', { merchantId, subscriptionId, notes });
     return response.data;
   } catch (error) {
     console.error("Failed to force activate subscription:", error);
     throw error;
   }
+};
+
+// Analytics interfaces
+export interface MerchantStats {
+  totalMerchants: number;
+  activeMerchants: number;
+  pendingMerchants: number;
+  suspendedMerchants: number;
+  cancelledMerchants: number;
+}
+
+export interface SubscriptionStats {
+  totalSubscriptions: number;
+  activeSubscriptions: number;
+  expiredSubscriptions: number;
+  cancelledSubscriptions: number;
+  suspendedSubscriptions: number;
+  pendingSubscriptions: number;
+}
+
+export interface RevenueStats {
+  totalRevenue: number;
+  todayRevenue: number;
+  thisWeekRevenue: number;
+  thisMonthRevenue: number;
+  thisYearRevenue: number;
+}
+
+export interface AnalyticsData {
+  merchantStats: MerchantStats;
+  subscriptionStats: SubscriptionStats;
+  revenueStats: RevenueStats;
+}
+
+export type AnalyticsResponse = GenericApiResponse<AnalyticsData>;
+
+// Analytics API function
+export const getAnalytics = async (): Promise<AnalyticsData> => {
+  const response = await apiClient.get<AnalyticsResponse>('/admin/analytics');
+  return response.data.data;
 };

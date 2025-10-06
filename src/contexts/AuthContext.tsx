@@ -27,8 +27,27 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(() => {
-    const storedUser = localStorage.getItem('user');
-    return storedUser ? JSON.parse(storedUser) : null;
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) return null;
+      
+      // Validate that the stored data is valid JSON
+      const parsedUser = JSON.parse(storedUser);
+      
+      // Additional validation to ensure it's a valid user object
+      if (parsedUser && typeof parsedUser === 'object' && parsedUser.email && parsedUser.token) {
+        return parsedUser;
+      } else {
+        // If the stored data is not a valid user object, clear it
+        localStorage.removeItem('user');
+        return null;
+      }
+    } catch (error) {
+      // If JSON parsing fails, clear the corrupted data and return null
+      console.warn('Corrupted user data in localStorage, clearing it:', error);
+      localStorage.removeItem('user');
+      return null;
+    }
   });
 
   const login = async (email: string, password: string): Promise<boolean> => {

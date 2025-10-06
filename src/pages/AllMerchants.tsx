@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -365,46 +366,120 @@ const AllMerchants: React.FC = () => {
   // Removed useEffect related to merchant details dialog
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="px-1">
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">All Merchants</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">Manage and monitor all merchant accounts</p>
-      </div>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="space-y-4 sm:space-y-6 bg-gradient-to-br from-gray-50/50 via-white to-sky-50/30 min-h-screen p-4 sm:p-6"
+    >
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-sky-50/20 via-transparent to-blue-50/20 pointer-events-none" />
+      
+      <motion.div 
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1, duration: 0.6 }}
+        className="px-1 relative z-10"
+      >
+        <motion.h1 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-gray-800 via-gray-700 to-sky-700 bg-clip-text text-transparent"
+        >
+          All Merchants
+        </motion.h1>
+        <motion.p 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          className="text-sm sm:text-base text-gray-600 mt-2"
+        >
+          Manage and monitor all merchant accounts
+        </motion.p>
+      </motion.div>
 
       {/* Search and Stats */}
-      <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2">
-        <Card className="border border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              {allMerchantsForStats.filter(m => m.status === 'ACTIVE').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Active Merchants</p>
-          </CardContent>
-        </Card>
-        <Card className="border border-border">
-          <CardContent className="p-4 sm:p-6">
-            <div className="text-xl sm:text-2xl font-bold text-foreground">
-              {allMerchantsForStats.filter(m => m.status === 'PENDING').length}
-            </div>
-            <p className="text-xs text-muted-foreground">Pending Approval</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="border border-border">
-        <CardHeader className="p-4 sm:p-6">
-          <CardTitle className="text-lg sm:text-xl">Merchant Directory</CardTitle>
-          <CardDescription className="text-sm">View and manage all merchant accounts</CardDescription>
-          <div className="relative w-full sm:max-w-sm">
-            <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+      <motion.div 
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="flex flex-col sm:flex-row gap-4 sm:gap-6 relative z-10"
+      >
+        <div className="flex-1">
+          <motion.div 
+            whileHover={{ scale: 1.02 }}
+            className="relative"
+          >
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search merchants..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 text-sm"
+              className="pl-10 w-full bg-white/80 backdrop-blur-sm border-gray-200 focus:border-sky-400 focus:ring-sky-400/20 shadow-sm hover:shadow-md transition-all duration-200"
             />
-          </div>
-        </CardHeader>
+          </motion.div>
+        </div>
+        <div className="flex gap-2 sm:gap-4">
+          <motion.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200">
+              <div className="text-xs sm:text-sm text-gray-500">Total</div>
+              <div className="text-lg sm:text-xl font-bold text-gray-800">{allMerchantsForStats.length}</div>
+            </Card>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm hover:shadow-lg transition-all duration-200">
+              <div className="text-xs sm:text-sm text-green-600">Active</div>
+              <div className="text-lg sm:text-xl font-bold text-green-700">{allMerchantsForStats.filter(m => m.status === 'ACTIVE').length}</div>
+            </Card>
+          </motion.div>
+          <motion.div
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-red-50 to-rose-50 border-red-200 shadow-sm hover:shadow-lg transition-all duration-200">
+              <div className="text-xs sm:text-sm text-red-600">Pending</div>
+              <div className="text-lg sm:text-xl font-bold text-red-700">{allMerchantsForStats.filter(m => m.status === 'PENDING').length}</div>
+            </Card>
+          </motion.div>
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.6 }}
+        className="relative z-10"
+      >
+        <Card className="border border-gray-200 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300">
+          <CardHeader className="p-4 sm:p-6 bg-gradient-to-r from-gray-50/50 to-sky-50/30 border-b border-gray-100">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+            >
+              <CardTitle className="text-lg sm:text-xl bg-gradient-to-r from-gray-800 to-sky-700 bg-clip-text text-transparent">Merchant Directory</CardTitle>
+              <CardDescription className="text-sm text-gray-600">View and manage all merchant accounts</CardDescription>
+              <div className="relative w-full sm:max-w-sm">
+                <Search className="absolute left-2 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  placeholder="Search merchants..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 text-sm bg-white/80 backdrop-blur-sm border-gray-200 focus:border-sky-400 focus:ring-sky-400/20"
+                />
+              </div>
+            </motion.div>
+          </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
           {/* Mobile Card Layout */}
           <div className="block sm:hidden space-y-4 p-4">
@@ -563,142 +638,198 @@ const AllMerchants: React.FC = () => {
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[200px]">Merchant</TableHead>
-                    <TableHead className="min-w-[100px]">Status</TableHead>
-                    <TableHead className="min-w-[120px]">Plan</TableHead>
-                    <TableHead className="min-w-[200px]">Actions</TableHead>
+                  <TableRow className="border-b border-gray-100 bg-gray-50/50">
+                    <TableHead className="min-w-[200px] text-left font-medium text-gray-600 px-4 py-3">Merchant</TableHead>
+                    <TableHead className="min-w-[100px] text-left font-medium text-gray-600 px-4 py-3">Status</TableHead>
+                    <TableHead className="min-w-[120px] text-left font-medium text-gray-600 px-4 py-3">Plan</TableHead>
+                    <TableHead className="min-w-[200px] text-left font-medium text-gray-600 px-4 py-3">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredMerchants.map((merchant) => (
-                    <TableRow key={merchant.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium text-foreground">{merchant.companyName}</div>
-                          <div className="text-sm text-muted-foreground">{merchant.email}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(merchant.status) as any}>
-                          {merchant.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={getPlanColor(merchant.activePlanName || '')}
-                          className="cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => handlePlanClick(merchant.activePlanName || '')}
-                        >
-                          {merchant.activePlanName || 'N/A'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/merchants/${merchant.id}`)}
+                  <AnimatePresence>
+                    {filteredMerchants.map((merchant, index) => (
+                      <motion.tr
+                        key={merchant.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ delay: index * 0.05, duration: 0.3 }}
+                        className="border-b border-gray-100 hover:bg-gradient-to-r hover:from-sky-50/30 hover:to-blue-50/20 transition-all duration-200"
+                      >
+                        <TableCell>
+                          <motion.div 
+                            whileHover={{ x: 5 }}
+                            className="flex items-center space-x-3"
                           >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Dialog>
-                            <DialogTrigger asChild>
+                            <motion.div 
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                              className="w-8 h-8 bg-gradient-to-br from-sky-100 to-blue-100 rounded-full flex items-center justify-center shadow-sm"
+                            >
+                              <span className="text-sm font-medium text-sky-700">
+                                {merchant.companyName.charAt(0).toUpperCase()}
+                              </span>
+                            </motion.div>
+                            <div>
+                              <div className="font-medium text-gray-800">{merchant.companyName}</div>
+                              <div className="text-sm text-gray-500">{merchant.email}</div>
+                            </div>
+                          </motion.div>
+                        </TableCell>
+                        <TableCell>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Badge variant={getStatusColor(merchant.status) as any}>
+                              {merchant.status}
+                            </Badge>
+                          </motion.div>
+                        </TableCell>
+                        <TableCell>
+                          <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Badge 
+                              variant={getPlanColor(merchant.activePlanName || '')}
+                              className="cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => handlePlanClick(merchant.activePlanName || '')}
+                            >
+                              {merchant.activePlanName || 'N/A'}
+                            </Badge>
+                          </motion.div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setSelectedMerchant(merchant)}
+                                onClick={() => navigate(`/merchants/${merchant.id}`)}
+                                className="bg-white/80 border-gray-200 hover:bg-sky-50 hover:border-sky-300 hover:text-sky-700 transition-all duration-200"
                               >
-                                <Edit className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            </DialogTrigger>
-                            <DialogContent className="w-[95vw] max-w-md">
-                              <DialogHeader>
-                                <DialogTitle>Update Merchant Status</DialogTitle>
-                                <DialogDescription>
-                                  Change the status for {selectedMerchant?.companyName}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">Current Status</label>
-                                  <p className="text-sm text-muted-foreground">
-                                    {selectedMerchant?.status}
-                                  </p>
-                                </div>
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">New Status</label>
-                                  <Select value={newStatus} onValueChange={setNewStatus}>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="PENDING">Pending</SelectItem>
-                                      <SelectItem value="ACTIVE">Active</SelectItem>
-                                      <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                                      <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <Button onClick={handleStatusUpdate} className="w-full">
-                                  Update Status
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Dialog open={isAssignPlanDialogOpen} onOpenChange={setIsAssignPlanDialogOpen}>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleOpenAssignPlanDialog(merchant)}
-                              >
-                                Assign Plan
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="w-[95vw] max-w-md">
-                              <DialogHeader>
-                                <DialogTitle>Assign Plan to {selectedMerchant?.companyName}</DialogTitle>
-                                <DialogDescription>
-                                  Select a new plan for {selectedMerchant?.companyName}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                  <label className="text-sm font-medium">Select New Plan</label>
-                                  <Select
-                                    value={selectedPlanId || ''}
-                                    onValueChange={(value) => setSelectedPlanId(value)}
+                            </motion.div>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedMerchant(merchant)}
+                                    className="bg-white/80 border-gray-200 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 transition-all duration-200"
                                   >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select a plan" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {regularPlans.map((planItem) => (
-                                        <SelectItem key={planItem.id} value={planItem.id}>
-                                          {planItem.name} - ${planItem.price}/{planItem.billingCycle.toLowerCase()}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </motion.div>
+                              </DialogTrigger>
+                              <DialogContent className="w-[95vw] max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Update Merchant Status</DialogTitle>
+                                  <DialogDescription>
+                                    Change the status for {selectedMerchant?.companyName}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Current Status</label>
+                                    <p className="text-sm text-muted-foreground">
+                                      {selectedMerchant?.status}
+                                    </p>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">New Status</label>
+                                    <Select value={newStatus} onValueChange={setNewStatus}>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select status" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="PENDING">Pending</SelectItem>
+                                        <SelectItem value="ACTIVE">Active</SelectItem>
+                                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                                        <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <Button onClick={handleStatusUpdate} className="w-full">
+                                    Update Status
+                                  </Button>
                                 </div>
-                                <Button onClick={handleAssignPlan} className="w-full">
-                                  Assign Plan
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenVoucherDialog(merchant)}
-                          >
-                            Voucher
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                              </DialogContent>
+                            </Dialog>
+                            <Dialog open={isAssignPlanDialogOpen} onOpenChange={setIsAssignPlanDialogOpen}>
+                              <DialogTrigger asChild>
+                                <motion.div
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => handleOpenAssignPlanDialog(merchant)}
+                                    className="bg-white/80 border-gray-200 hover:bg-green-50 hover:border-green-300 hover:text-green-700 transition-all duration-200"
+                                  >
+                                    Assign Plan
+                                  </Button>
+                                </motion.div>
+                              </DialogTrigger>
+                              <DialogContent className="w-[95vw] max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle>Assign Plan to {selectedMerchant?.companyName}</DialogTitle>
+                                  <DialogDescription>
+                                    Select a new plan for {selectedMerchant?.companyName}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Select New Plan</label>
+                                    <Select
+                                      value={selectedPlanId || ''}
+                                      onValueChange={(value) => setSelectedPlanId(value)}
+                                    >
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Select a plan" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {regularPlans.map((planItem) => (
+                                          <SelectItem key={planItem.id} value={planItem.id}>
+                                            {planItem.name} - ${planItem.price}/{planItem.billingCycle.toLowerCase()}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <Button onClick={handleAssignPlan} className="w-full">
+                                    Assign Plan
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenVoucherDialog(merchant)}
+                                className="bg-white/80 border-gray-200 hover:bg-purple-50 hover:border-purple-300 hover:text-purple-700 transition-all duration-200"
+                              >
+                                Voucher
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
                 </TableBody>
               </Table>
             )}
@@ -744,6 +875,7 @@ const AllMerchants: React.FC = () => {
           )}
         </CardContent>
       </Card>
+      </motion.div>
 
       {/* Voucher Plan Dialog */}
       <Dialog open={isVoucherDialogOpen} onOpenChange={setIsVoucherDialogOpen}>
@@ -862,7 +994,7 @@ const AllMerchants: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </motion.div>
   );
 };
 

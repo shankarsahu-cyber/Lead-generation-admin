@@ -98,16 +98,17 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
         </div>
         
         <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Billing Cycle *</label>
+          <label className="block font-medium text-sm sm:text-base">Plan Type *</label>
           <select
             value={formData.billingCycle}
             onChange={e => handleInputChange('billingCycle', e.target.value)}
             required
             className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
           >
-            <option value="">Select billing cycle</option>
+            <option value="">Select plan type</option>
             <option value="MONTHLY">Monthly</option>
             <option value="YEARLY">Yearly</option>
+            <option value="ADDONS">Addons</option>
           </select>
         </div>
         
