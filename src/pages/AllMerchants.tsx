@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,8 @@ const AllMerchants: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [selectedMerchant, setSelectedMerchant] = useState<Merchant | null>(null);
   const [newStatus, setNewStatus] = useState('');
   const [merchants, setMerchants] = useState<Merchant[]>([]);
@@ -45,7 +47,7 @@ const AllMerchants: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await getMerchants(undefined, undefined, searchTerm, page, size); // Fetch all merchants for table, then filter if searchTerm exists
+      const response = await getMerchants(undefined, undefined, debouncedSearchTerm, page, size); // Use debouncedSearchTerm instead of searchTerm
       const merchantsWithActivePlans = await Promise.all(
         response.content.map(async (merchant) => {
           try {
@@ -93,7 +95,27 @@ const AllMerchants: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [page, size, searchTerm, toast]);
+  }, [page, size, debouncedSearchTerm, toast]);
+
+  // Handle debounced search
+  useEffect(() => {
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set a new timeout
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+    
+    // Cleanup function to clear timeout if component unmounts or searchTerm changes again
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm]);
 
   // Removed separate fetchAllMerchantsForStats function to avoid duplicate API calls
 
@@ -471,15 +493,6 @@ const AllMerchants: React.FC = () => {
             >
               <CardTitle className="text-lg sm:text-xl bg-gradient-to-r from-gray-800 to-sky-700 bg-clip-text text-transparent">Merchant Directory</CardTitle>
               <CardDescription className="text-sm text-gray-600">View and manage all merchant accounts</CardDescription>
-              <div className="relative w-full sm:max-w-sm">
-                <Search className="absolute left-2 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search merchants..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-8 text-sm bg-white/80 backdrop-blur-sm border-gray-200 focus:border-sky-400 focus:ring-sky-400/20"
-                />
-              </div>
             </motion.div>
           </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
