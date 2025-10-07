@@ -446,31 +446,31 @@ const AllMerchants: React.FC = () => {
         </div>
         <div className="flex gap-2 sm:gap-4">
           <motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm hover:shadow-lg transition-all duration-200">
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="text-xs sm:text-sm text-gray-500">Total</div>
               <div className="text-lg sm:text-xl font-bold text-gray-800">{allMerchantsForStats.length}</div>
             </Card>
           </motion.div>
           <motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm hover:shadow-lg transition-all duration-200">
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="text-xs sm:text-sm text-green-600">Active</div>
               <div className="text-lg sm:text-xl font-bold text-green-700">{allMerchantsForStats.filter(m => m.status === 'ACTIVE').length}</div>
             </Card>
           </motion.div>
           <motion.div
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.99 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-red-50 to-rose-50 border-red-200 shadow-sm hover:shadow-lg transition-all duration-200">
+            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-red-50 to-rose-50 border-red-200 shadow-sm hover:shadow-md transition-all duration-200">
               <div className="text-xs sm:text-sm text-red-600">Pending</div>
               <div className="text-lg sm:text-xl font-bold text-red-700">{allMerchantsForStats.filter(m => m.status === 'PENDING').length}</div>
             </Card>

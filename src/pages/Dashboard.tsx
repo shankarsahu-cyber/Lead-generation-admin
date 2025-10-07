@@ -242,8 +242,8 @@ const Dashboard: React.FC = () => {
                   damping: 15
                 }}
                 whileHover={{ 
-                  y: -8, 
-                  scale: 1.03,
+                  y: -2, 
+                  scale: 1.01,
                   transition: { duration: 0.3, type: "spring", stiffness: 300 }
                 }}
                 className="h-full"
@@ -335,7 +335,7 @@ const Dashboard: React.FC = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.7, duration: 0.6, type: "spring", stiffness: 120 }}
-          whileHover={{ y: -6, scale: 1.02 }}
+          whileHover={{ y: -2, scale: 1.01 }}
           className="h-full"
         >
           <Card className="border-0 bg-gradient-to-br from-emerald-50/80 via-green-50/40 to-emerald-50/60 shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden group h-full relative">
@@ -457,7 +457,7 @@ const Dashboard: React.FC = () => {
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.8, duration: 0.6, type: "spring", stiffness: 120 }}
-          whileHover={{ y: -6, scale: 1.02 }}
+          whileHover={{ y: -2, scale: 1.01 }}
           className="h-full"
         >
           <Card className="border-0 bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-blue-50/60 shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden group h-full relative">
