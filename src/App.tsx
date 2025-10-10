@@ -15,8 +15,9 @@ import CreatePlan from "./pages/CreatePlan";
 import MerchantDetailsPage from "./pages/MerchantDetailsPage";
 import EditMerchantPage from "./pages/EditMerchantPage";
 import NotFound from "./pages/NotFound";
+import FormBuilderPage from "./components/Template/TemplatetBuilder";
 
-const TemplateBuilder = React.lazy(() => import("./features/template-builder"));
+// const TemplateBuilder = React.lazy(() => import("./features/template-builder"));
 
 const queryClient = new QueryClient();
 
@@ -57,7 +58,7 @@ const AppContent = () => {
               <Route path="create-plan" element={<CreatePlan />} />
               <Route
                 path="template-builder/*"
-                element={<React.Suspense fallback={<div>Loading Template Builder...</div>}><TemplateBuilder auth={auth} onSave={handleSaveTemplate} /></React.Suspense>}
+                element={<React.Suspense fallback={<div>Loading Template Builder...</div>}><FormBuilderPage  /></React.Suspense>}
               />
             </Route>
             <Route path="*" element={<NotFound />} />
