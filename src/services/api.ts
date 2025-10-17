@@ -64,7 +64,7 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
 
-        console.log('Access token expired or forbidden (401/403), attempting refresh...');
+      
         const refreshUrl = 'http://15.206.69.231:8888/api/auth/refresh';
         
         const refreshResponse = await axios.post(refreshUrl, {
@@ -86,7 +86,7 @@ apiClient.interceptors.response.use(
           // Update Authorization header for the retry request
           originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.data.token}`;
           
-          console.log('Token refreshed successfully. Retrying original request.');
+         
           
           // Retry the original request with new token
           return apiClient(originalRequest);

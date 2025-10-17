@@ -87,11 +87,11 @@ export default function ImageUploadDialog({
       const contentType = response.headers.get('content-type') || '';
       let imageUrl;
 
-      console.log('Response content-type:', contentType);
+     
 
       if (contentType.includes('application/json')) {
         const result = await response.json();
-        console.log('JSON response:', result);
+       
         if (result.success && result.data && result.data.url) {
           imageUrl = result.data.url;
         } else if (result.success && result.url) {
@@ -102,7 +102,7 @@ export default function ImageUploadDialog({
       } else {
         // API returns URL as plain text
         imageUrl = await response.text();
-        console.log('Text response:', imageUrl);
+       
         if (!imageUrl || !imageUrl.startsWith('http')) {
           throw new Error('Invalid URL returned from server');
         }

@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
       const pending = merchants.filter(merchant => merchant.status === 'PENDING');
       setPendingMerchants(pending);
       
-      console.log('Fetched merchants:', merchants.length, 'Pending:', pending.length);
+     
     } catch (error) {
       console.error('Failed to fetch pending merchants:', error);
       setPendingMerchants([]); // Set empty array on error
@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
       setAnalyticsLoading(true);
       const data = await getAnalytics();
       setAnalyticsData(data);
-      console.log('Fetched analytics data:', data);
+      
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
       toast({
