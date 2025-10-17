@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Use environment variable for API base URL
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://15.206.69.231:8888/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.adpair.co/api'; 
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -65,7 +65,7 @@ apiClient.interceptors.response.use(
         }
 
         console.log('Access token expired or forbidden (401/403), attempting refresh...');
-        const refreshUrl = 'http://15.206.69.231:8888/api/auth/refresh';
+        const refreshUrl = 'https://api.adpair.co/api/auth/refresh';
         
         const refreshResponse = await axios.post(refreshUrl, {
           refreshToken: user.refreshToken,

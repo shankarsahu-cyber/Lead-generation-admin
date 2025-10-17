@@ -127,19 +127,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             />
           </div>
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="lg:hidden text-gray-500 hover:text-sky-600 hover:bg-sky-50 transition-all duration-200 rounded-xl"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </motion.div>
+
         </motion.div>
 
         {/* Navigation */}

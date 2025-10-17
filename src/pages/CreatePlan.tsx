@@ -20,7 +20,7 @@ import {
   TooltipTrigger
 } from '@/components/ui/tooltip';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://15.206.69.231:8888';
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://api.adpair.co/';
 
 const CreatePlan: React.FC = () => {
   const { toast } = useToast();
@@ -32,6 +32,7 @@ const CreatePlan: React.FC = () => {
     maxForms: '',
     maxLeadsPerMonth: '',
     maxLocations: '',
+    discountPercent: '',
     features: JSON.stringify({}),
   });
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
@@ -143,7 +144,7 @@ const CreatePlan: React.FC = () => {
       }
 
       toast({
-        title: "Plan Created Successfully! 🎉",
+        title: "Plan Created Successfully! ",
         description: `${formData.name} plan has been created and is now available`,
         variant: "success",
       });
@@ -156,6 +157,7 @@ const CreatePlan: React.FC = () => {
         maxForms: '',
         maxLeadsPerMonth: '',
         maxLocations: '',
+        discountPercent: '',
         features: JSON.stringify({}),
       });
       fetchAllPlans();
@@ -169,7 +171,7 @@ const CreatePlan: React.FC = () => {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col bg-background p-4 sm:p-6">
+    <div className="w-full min-h-screen flex flex-col bg-background p-0 sm:p-1ss">
       <div className="max-w-7xl mx-auto w-full flex flex-col flex-1">
         {/* Page Header */}
         <div className="mb-6 sm:mb-8">
@@ -233,10 +235,11 @@ const CreatePlan: React.FC = () => {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs sm:text-sm text-muted-foreground mb-3">
                     <p>Max Forms: <span className="font-medium">{plan.maxForms}</span></p>
                     <p>Max Leads/Month: <span className="font-medium">{plan.maxLeadsPerMonth}</span></p>
                     <p>Max Locations: <span className="font-medium">{plan.maxLocations}</span></p>
+                    <p>Discount: <span className="font-medium text-green-600">{plan.discountPercent}%</span></p>
                   </div>
                   
                   <div className="mt-3">

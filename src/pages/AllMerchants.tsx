@@ -282,7 +282,7 @@ const AllMerchants: React.FC = () => {
         await createMerchantSubscription(selectedMerchant.id, selectedVoucherPlanId);
         fetchMerchants(); // Refresh merchants to show new subscription if relevant
         toast({
-          title: "Voucher Applied Successfully! 🎁",
+          title: "Voucher Applied Successfully! ",
           description: `${selectedMerchant.companyName}'s voucher plan has been applied to ${plans.find(p => p.id === selectedVoucherPlanId)?.name}`,
           variant: "success",
         });
@@ -394,7 +394,7 @@ const AllMerchants: React.FC = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
-      className="space-y-4 sm:space-y-6 bg-gradient-to-br from-gray-50/50 via-white to-sky-50/30 min-h-screen p-4 sm:p-6"
+      className="space-y-0 sm:space-y-2 bg-gradient-to-br from-gray-50/50 via-white to-sky-50/30 min-h-screen p-0 sm:p-1"
     >
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-sky-50/20 via-transparent to-blue-50/20 pointer-events-none" />
@@ -403,7 +403,7 @@ const AllMerchants: React.FC = () => {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.6 }}
-        className="px-1 relative z-10"
+        className="px-2 relative z-4"
       >
         <motion.h1 
           initial={{ opacity: 0 }}
@@ -435,7 +435,7 @@ const AllMerchants: React.FC = () => {
             whileHover={{ scale: 1.02 }}
             className="relative"
           >
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 z-10" />
             <Input
               placeholder="Search merchants..."
               value={searchTerm}
@@ -444,38 +444,7 @@ const AllMerchants: React.FC = () => {
             />
           </motion.div>
         </div>
-        <div className="flex gap-2 sm:gap-4">
-          <motion.div
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-white/80 backdrop-blur-sm border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
-              <div className="text-xs sm:text-sm text-gray-500">Total</div>
-              <div className="text-lg sm:text-xl font-bold text-gray-800">{allMerchantsForStats.length}</div>
-            </Card>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 shadow-sm hover:shadow-md transition-all duration-200">
-              <div className="text-xs sm:text-sm text-green-600">Active</div>
-              <div className="text-lg sm:text-xl font-bold text-green-700">{allMerchantsForStats.filter(m => m.status === 'ACTIVE').length}</div>
-            </Card>
-          </motion.div>
-          <motion.div
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.99 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            <Card className="px-3 py-2 sm:px-4 sm:py-3 bg-gradient-to-br from-red-50 to-rose-50 border-red-200 shadow-sm hover:shadow-md transition-all duration-200">
-              <div className="text-xs sm:text-sm text-red-600">Pending</div>
-              <div className="text-lg sm:text-xl font-bold text-red-700">{allMerchantsForStats.filter(m => m.status === 'PENDING').length}</div>
-            </Card>
-          </motion.div>
-        </div>
+
       </motion.div>
 
       <motion.div

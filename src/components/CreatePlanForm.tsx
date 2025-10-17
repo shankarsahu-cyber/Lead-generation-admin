@@ -145,6 +145,17 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
           />
         </div>
         
+        <div className="space-y-1">
+          <label className="block font-medium text-sm sm:text-base">Discount Percent</label>
+          <input
+            type="number"
+            value={formData.discountPercent}
+            onChange={e => handleInputChange('discountPercent', e.target.value)}
+            placeholder="e.g., 10"
+            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          />
+        </div>
+        
         <div className="lg:col-span-2 space-y-1">
           <label className="block font-semibold text-sm sm:text-base mb-2">Description</label>
           <textarea

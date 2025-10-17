@@ -34,7 +34,7 @@ const Dashboard: React.FC = () => {
       const pending = merchants.filter(merchant => merchant.status === 'PENDING');
       setPendingMerchants(pending);
       
-      console.log('Fetched merchants:', merchants.length, 'Pending:', pending.length);
+
     } catch (error) {
       console.error('Failed to fetch pending merchants:', error);
       setPendingMerchants([]); // Set empty array on error
@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
       setAnalyticsLoading(true);
       const data = await getAnalytics();
       setAnalyticsData(data);
-      console.log('Fetched analytics data:', data);
+
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
       toast({
@@ -199,7 +199,7 @@ const Dashboard: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
-              <Card className="border-0 bg-gradient-to-br from-white via-gray-50/50 to-white shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden h-full">
+              <Card className="border-0 bg-gradient-to-br from-white via-gray-50/50 to-white shadow-xl rounded-3xl overflow-hidden h-full">
                 <CardHeader className="p-6 md:p-8">
                   <CardTitle className="flex items-center gap-3 text-lg md:text-xl">
                     <div className="h-6 w-6 md:h-8 md:w-8 bg-gray-300 rounded-2xl animate-pulse"></div>
@@ -241,14 +241,10 @@ const Dashboard: React.FC = () => {
                   stiffness: 120,
                   damping: 15
                 }}
-                whileHover={{ 
-                  y: -2, 
-                  scale: 1.01,
-                  transition: { duration: 0.3, type: "spring", stiffness: 300 }
-                }}
+
                 className="h-full"
               >
-                <Card className={`border-0 bg-gradient-to-br ${bgGradients[card.color as keyof typeof bgGradients]} shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden group h-full relative flex flex-col`}>
+                <Card className={`border-0 bg-gradient-to-br ${bgGradients[card.color as keyof typeof bgGradients]} shadow-xl rounded-3xl overflow-hidden group h-full relative flex flex-col`}>
                   {/* Animated background pattern */}
                   <div className="absolute inset-0 opacity-5">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.8),transparent_50%)]"></div>
@@ -263,8 +259,6 @@ const Dashboard: React.FC = () => {
                     <CardTitle className="flex items-center gap-1.5 md:gap-2 text-xs md:text-sm">
                       <motion.div 
                         className={`p-1 md:p-1.5 rounded-md bg-gradient-to-br ${gradientColors[card.color as keyof typeof gradientColors]} shadow-md`}
-                        whileHover={{ scale: 1.15, rotate: 10 }}
-                        transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
                       >
                         <Icon className="h-2.5 w-2.5 md:h-3 md:w-3 text-white drop-shadow-sm" />
                       </motion.div>
@@ -278,11 +272,10 @@ const Dashboard: React.FC = () => {
                       {card.stats.map((stat, statIndex) => (
                         <motion.div 
                           key={statIndex} 
-                          className="p-1.5 md:p-2 rounded-md bg-white/50 backdrop-blur-sm border border-white/30 hover:bg-white/70 hover:border-white/50 transition-all duration-300 group h-fit"
+                          className="p-1.5 md:p-2 rounded-md bg-white/50 backdrop-blur-sm border border-white/30 group h-fit"
                           initial={{ opacity: 0, scale: 0.9 }}
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ delay: (index * 0.1) + (statIndex * 0.05), duration: 0.3 }}
-                          whileHover={{ scale: 1.02, transition: { duration: 0.2 } }}
                         >
                           <div className="text-center h-fit">
                             <div className="text-sm md:text-base font-bold text-gray-900 mb-0.5 h-fit">
@@ -335,10 +328,10 @@ const Dashboard: React.FC = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.7, duration: 0.6, type: "spring", stiffness: 120 }}
-          whileHover={{ y: -2, scale: 1.01 }}
+
           className="h-full"
         >
-          <Card className="border-0 bg-gradient-to-br from-emerald-50/80 via-green-50/40 to-emerald-50/60 shadow-xl hover:shadow-2xl transition-all duration-500 rounded-3xl overflow-hidden group h-full relative">
+          <Card className="border-0 bg-gradient-to-br from-emerald-50/80 via-green-50/40 to-emerald-50/60 shadow-xl rounded-3xl overflow-hidden group h-full relative">
             {/* Animated background pattern */}
             <div className="absolute inset-0 opacity-5">
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(16,185,129,0.3),transparent_50%)]"></div>
@@ -353,8 +346,7 @@ const Dashboard: React.FC = () => {
               <CardTitle className="flex items-center gap-2 text-sm md:text-base">
                 <motion.div
                   className="p-1.5 md:p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-green-500 shadow-lg"
-                  whileHover={{ scale: 1.15, rotate: 10 }}
-                  transition={{ duration: 0.3, type: "spring", stiffness: 300 }}
+
                 >
                   <UserCheck className="h-3 w-3 md:h-4 md:w-4 text-white drop-shadow-sm" />
                 </motion.div>
@@ -394,8 +386,7 @@ const Dashboard: React.FC = () => {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -20 }}
                       transition={{ delay: index * 0.1, duration: 0.3 }}
-                      whileHover={{ scale: 1.02 }}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 border border-gray-200/50 rounded-lg bg-white/50 backdrop-blur-sm hover:bg-white/80 transition-all duration-200"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-2 border border-gray-200/50 rounded-lg bg-white/50 backdrop-blur-sm"
                     >
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-foreground truncate">
