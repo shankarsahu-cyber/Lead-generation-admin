@@ -20,7 +20,7 @@ const AddLocation = ({ formId }) => {
       const token = localStorage.getItem("authToken");
 
       // Fetch all available locations
-      const locationsResponse = await fetch("http://15.206.69.231:8888/api/merchant/locations", {
+      const locationsResponse = await fetch("https://api.adpair.co/api/merchant/locations", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -39,7 +39,7 @@ const AddLocation = ({ formId }) => {
 
       // Fetch form details to get previously selected locations
       if (formId) {
-        const formResponse = await fetch(`http://15.206.69.231:8888/api/merchant/forms/${formId}`, {
+        const formResponse = await fetch(`https://api.adpair.co/api/merchant/forms/${formId}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -89,7 +89,7 @@ const AddLocation = ({ formId }) => {
       // Get token from localStorage
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`http://15.206.69.231:8888/api/merchant/forms/${formId}/locations`, {
+      const response = await fetch(`http:///api/merchant/forms/${formId}/locations`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

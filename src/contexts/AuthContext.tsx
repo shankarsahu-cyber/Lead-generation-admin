@@ -53,8 +53,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       const response = await apiLogin(email, password);
-      console.log("Full Login API Response:", response); // Log the entire response object
-      console.log("Login API Response Data (contents of response.data):", response.data); // Log just the data payload
 
       // Check if login was successful and data.user exists
       if (!response.success || !response.data || !response.data.token || typeof response.data.token !== 'string' || !response.data.email || !response.data.role || !response.data.merchantId) {

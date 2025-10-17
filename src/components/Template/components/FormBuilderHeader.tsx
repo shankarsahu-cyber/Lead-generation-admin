@@ -165,7 +165,7 @@ export default function FormBuilderHeader({
             <Plus className="h-4 w-4" /> New Item
           </Button>
 
-          <Button
+          {/* <Button
             onClick={onPublish}
             className={`gap-2 ${
               currentForm?.isPublished ? "bg-green-500 hover:bg-green-700" : "bg-blue-500 hover:bg-blue-600"
@@ -173,7 +173,7 @@ export default function FormBuilderHeader({
             data-testid="button-publish"
           >
             {currentForm?.isPublished ? "Published" : "Publish"}
-          </Button>
+          </Button> */}
 
           {currentForm?.isPublished && (
             <LinkPopover publishedSnippet={currentForm.publishedSnippet} publishedURL={currentForm.publishedURL} />

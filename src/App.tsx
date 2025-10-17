@@ -16,6 +16,7 @@ import MerchantDetailsPage from "./pages/MerchantDetailsPage";
 import EditMerchantPage from "./pages/EditMerchantPage";
 import NotFound from "./pages/NotFound";
 import FormBuilderPage from "./components/Template/TemplatetBuilder";
+import TemplateViewer from "./components/Template/templateViewer";
 
 // const TemplateBuilder = React.lazy(() => import("./features/template-builder"));
 
@@ -29,7 +30,6 @@ const AppContent = () => {
   const { user } = useAuth();
 
   const handleSaveTemplate = async (template: any) => {
-    console.log("Saving template:", template);
     // Implement actual API call to save the template
     // const response = await api.post("/templates", template);
     // return response.data;
@@ -56,11 +56,13 @@ const AppContent = () => {
               <Route path="merchants/:merchantId" element={<MerchantDetailsPage />} />
               <Route path="merchants/:merchantId/edit" element={<EditMerchantPage />} />
               <Route path="create-plan" element={<CreatePlan />} />
+               <Route path="template-view" element={<TemplateViewer />} />
               <Route
-                path="template-builder/*"
+                path="template-builder/:id"
                 element={<React.Suspense fallback={<div>Loading Template Builder...</div>}><FormBuilderPage  /></React.Suspense>}
               />
             </Route>
+           
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

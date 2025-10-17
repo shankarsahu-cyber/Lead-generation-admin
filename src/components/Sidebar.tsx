@@ -38,11 +38,13 @@ const navigation = [
     href: '/create-plan',
     icon: Settings,
   },
+
   {
-    name: 'Template Builder',
-    href: '/template-builder',
+    name: 'Templates',
+    href: '/template-view',
     icon: FileText,
   },
+
 ];
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {

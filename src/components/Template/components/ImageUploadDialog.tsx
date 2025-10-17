@@ -63,7 +63,10 @@ export default function ImageUploadDialog({
     setIsUploading(true);
     
     try {
-      const authToken = localStorage.getItem('authToken');
+      // Get token from localStorage user object
+      const storedUser = localStorage.getItem('user');
+      const authToken = storedUser ? JSON.parse(storedUser).token : null;
+      
       if (!authToken) {
         throw new Error('Authentication token not found. Please log in first.');
       }
@@ -71,7 +74,7 @@ export default function ImageUploadDialog({
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      const response = await fetch('http://15.206.69.231:8888/api/admin/uploads/file', {
+      const response = await fetch('https://api.adpair.co/api/admin/uploads/file', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`
@@ -87,11 +90,11 @@ export default function ImageUploadDialog({
       const contentType = response.headers.get('content-type') || '';
       let imageUrl;
 
-      console.log('Response content-type:', contentType);
+     
 
       if (contentType.includes('application/json')) {
         const result = await response.json();
-        console.log('JSON response:', result);
+       
         if (result.success && result.data && result.data.url) {
           imageUrl = result.data.url;
         } else if (result.success && result.url) {
@@ -102,7 +105,7 @@ export default function ImageUploadDialog({
       } else {
         // API returns URL as plain text
         imageUrl = await response.text();
-        console.log('Text response:', imageUrl);
+       
         if (!imageUrl || !imageUrl.startsWith('http')) {
           throw new Error('Invalid URL returned from server');
         }

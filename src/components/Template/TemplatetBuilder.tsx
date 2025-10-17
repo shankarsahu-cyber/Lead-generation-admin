@@ -12,6 +12,8 @@ import EditItemDialog from "./components/EditItemDialog"
 import ImageUploadDialog from "./components/ImageUploadDialog"
 import { Button } from "@/components/ui/button"
 import AddLocation from "./components/AddLocation"
+import { useLocation } from "react-router-dom"
+import { useParams } from "react-router-dom";
 
 
 
@@ -36,6 +38,7 @@ interface ApiForm {
   locations: any[]
   publishedUrl: string
   jsSnippet: string
+  category: string
 }
 
 interface ApiResponse {
@@ -62,6 +65,10 @@ export default function FormBuilderPage() {
   const [redirectUrl, setRedirectUrl] = useState("")
   const [contactTypes, setContactTypes] = useState<string[]>([])
   const [currentFormID, setCurrentFormID] = useState<number | null>(null)
+const location = useLocation();
+const GetTemplateID = useParams().id;
+  // fallback to 1
+
 
   // Convert API format back to tree structure
   const convertApiToTreeFormat = useCallback((formData: any): TreeNode[] => {
@@ -183,77 +190,61 @@ export default function FormBuilderPage() {
     })
   }, [toast, newFormName])
 
+
+
   // Fetch forms from API
-  const fetchTemplates = useCallback(async () => {
-    setIsLoading(true)
-    try {
-        const storedUser = localStorage.getItem('user');
-const authToken = storedUser ? JSON.parse(storedUser).token : null;
-    
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please log in first.")
+ const fetchTemplates = useCallback(async () => {
+  setIsLoading(true)
+  try {
+    const storedUser = localStorage.getItem('user');
+    const authToken = storedUser ? JSON.parse(storedUser).token : null;
+
+    if (!authToken) throw new Error("Authentication token not found.");
+
+  
+   
+  
+
+    if (!GetTemplateID) throw new Error("TemplateID not found in URL or state.")
+
+    const response = await fetch(`https://api.adpair.co/api/admin/templates/${GetTemplateID}`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${authToken}` },
+    });
+
+    if (!response.ok) throw new Error(`Failed to fetch template: ${response.statusText}`);
+
+    const apiResponse = await response.json();
+
+    if (apiResponse) {
+      setAllTemplates([apiResponse]);
+      setCurrentFormIndex(0);
+
+      try {
+        const formPayload = JSON.parse(apiResponse.formPayload);
+        const treeStructure = convertApiToTreeFormat(formPayload);
+        setTreeData(treeStructure);
+        if (treeStructure.length > 0) setSelectedNodeId(treeStructure[0].id);
+      } catch (parseError) {
+        toast({ title: "Parse Error", description: "Error parsing template data", variant: "destructive" });
       }
-
-      const response = await fetch("http://15.206.69.231:8888/api/admin/templates?category", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      })
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch forms: ${response.status} ${response.statusText}`)
-      }
-
-      const apiResponse: ApiResponse = await response.json()
-
-      if (apiResponse.success && apiResponse.data && apiResponse.data.length > 0) {
-        // Store all forms
-        setAllTemplates(apiResponse.data)
-
-        let lastIndex = Number(localStorage.getItem("lastFormIndex"))
-        if (isNaN(lastIndex) || lastIndex < 0 || lastIndex >= apiResponse.data.length) {
-          lastIndex = apiResponse.data.length - 1
-        }
-
-        setCurrentFormIndex(lastIndex)
-        const lastForm = apiResponse.data[lastIndex]
-        try {
-          const formPayload = JSON.parse(lastForm.formPayload)
-
-          const treeStructure = convertApiToTreeFormat(formPayload)
-          setTreeData(treeStructure)
-
-          if (treeStructure.length > 0) {
-            setSelectedNodeId(treeStructure[0].id)
-          }
-        } catch (parseError) {
-          toast({
-            title: "Parse Error",
-            description: "Error parsing first form data from server.",
-            variant: "destructive",
-          })
-        }
-      } else {
-        // No forms found, start with empty structure
-
-        setAllTemplates([])
-        createNewTemplate()
-      }
-    } catch (error) {
-      toast({
-        title: "Load Failed",
-        description: error instanceof Error ? error.message : "Failed to load forms from server.",
-        variant: "destructive",
-      })
-
-      // Fallback to empty form
-      setAllTemplates([])
-      createNewTemplate()
-    } finally {
-      setIsLoading(false)
+    } else {
+      createNewTemplate(); // fallback
     }
-  }, [convertApiToTreeFormat, toast, createNewTemplate])
+  } catch (error) {
+    toast({
+      title: "Load Failed",
+      description: error instanceof Error ? error.message : "Failed to load template",
+      variant: "destructive",
+    });
+    setAllTemplates([]);
+    createNewTemplate();
+  } finally {
+    setIsLoading(false);
+  }
+}, [location, convertApiToTreeFormat, toast, createNewTemplate]);
+
+
 
   // Load forms on component mount
   useEffect(() => {
@@ -443,7 +434,7 @@ const authToken = storedUser ? JSON.parse(storedUser).token : null;
           },
         ],
       }
-console.log(step,"step")
+
       steps.push(step)
       return currentStepId
     }
@@ -498,93 +489,130 @@ console.log(step,"step")
     }
   }, [treeData])
 
-  const handleSave = useCallback(async () => {
-    setIsSaving(true)
+ const handleSave = useCallback(async () => {
+  setIsSaving(true)
 
-    try {
-      const formData = convertTreeToApiFormat()
+  try {
+    const formData = convertTreeToApiFormat()
 
-      // Get auth token from localStorage
-     const storedUser = localStorage.getItem('user');
-const authToken = storedUser ? JSON.parse(storedUser).token : null;
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please log in first.")
+    // Get auth token from localStorage
+    const storedUser = localStorage.getItem('user')
+    const authToken = storedUser ? JSON.parse(storedUser).token : null
+    if (!authToken) {
+      throw new Error("Authentication token not found. Please log in first.")
+    }
+
+    let response
+    let result
+
+    if (currentFormIndex === -1) {
+      // Creating a new form - POST
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        category: "DEFAULT_CATEGORY", // Replace with your category
+        isActive: true,
+        formPayload: JSON.stringify({
+          ...formData,
+          formId: `temp_new_${Date.now()}`,
+          theme: {
+            primaryColor: "#007bff",
+            secondaryColor: "#6c757d",
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            borderColor: "#dee2e6",
+            borderRadius: "4px",
+            fontFamily: "Arial, sans-serif",
+            buttonColor: "#007bff",
+            buttonTextColor: "#ffffff",
+          },
+        }),
+      }
+      response = await fetch("https://api.adpair.co/api/admin/templates/filter?isActive&category=TRAVEL&page=0&size=20", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Create API request failed: ${response.status} ${response.statusText}`)
       }
 
-      let response
-      let result
+      result = await response.json()
+      toast({
+        title: "Form Created Successfully",
+        description: "Your new form has been created and saved to the server.",
+      })
 
-      if (currentFormIndex === -1) {
-        // Creating a new form - use POST
-        response = await fetch("http://15.206.69.231:8888/api/admin/templates?category=TRAVEL", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${authToken}`,
+      await fetchTemplates()
+    } else {
+      // Updating an existing form - PUT
+      const currentForm = allForms[currentFormIndex]
+      if (!currentForm || !currentForm.id) {
+        throw new Error("No form ID found for update operation.")
+      }
+
+      const payload = {
+        id: currentForm.id,
+        name: formData.name,
+        description: formData.description,
+        category: currentForm.category || "DEFAULT_CATEGORY", // Replace with your category
+        isActive: currentForm.isActive !== undefined ? currentForm.isActive : true,
+        formPayload: JSON.stringify({
+          ...formData,
+          formId: `temp_${currentForm.id}`,
+          theme: {
+            primaryColor: "#007bff",
+            secondaryColor: "#6c757d",
+            backgroundColor: "#ffffff",
+            textColor: "#333333",
+            borderColor: "#dee2e6",
+            borderRadius: "4px",
+            fontFamily: "Arial, sans-serif",
+            buttonColor: "#007bff",
+            buttonTextColor: "#ffffff",
           },
-          body: JSON.stringify(formData),
-        })
+        }),
+      }
 
-        if (!response.ok) {
-          throw new Error(`Create API request failed: ${response.status} ${response.statusText}`)
-        }
-
-        result = await response.json()
-
-        toast({
-          title: "Form Created Successfully",
-          description: "Your new form has been created and saved to the server.",
-        })
-
-        // Refresh the forms list to include the new form
-        await fetchTemplates()
-      } else {
-        // Updating an existing form - use PUT
-        const currentForm = allForms[currentFormIndex]
-        if (!currentForm || !currentForm.id) {
-          throw new Error("No form ID found for update operation.")
-        }
-       
-        // console.log(JSON.stringify(formData))
-
-        response = await fetch(`http://15.206.69.231:8888/api/merchant/forms/${currentForm.id}`, {
+      response = await fetch(
+        `https://api.adpair.co/api/admin/templates/${currentForm.id}`,
+        {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${authToken}`,
           },
-          body: JSON.stringify(formData),
-        })
-        const result = await response.json()
-
-        if (!result.success) {
-          toast({
-            title: "Update Failed",
-            description: result.message || result.error || "Failed to update form.",
-            variant: "destructive",
-          })
-          throw new Error(result.message || result.error || "Failed to update form.")
+          body: JSON.stringify(payload),
         }
+      )
 
-        toast({
-          title: "Form Updated Successfully",
-          description: `"${currentForm.name}" has been updated successfully.`,
-        })
+      result = await response.json()
 
-        // Refresh the forms list to get the latest data
-        await fetchTemplates()
-      }
-    } catch (error) {
-      console.error("Save error:", error.error || error)
+
+
       toast({
-        title: "Save Failed",
-        description: error instanceof Error ? error.message : "There was an error saving your form.",
-        variant: "destructive",
+        title: "Template Updated Successfully",
+        description: `"${currentForm.name}" has been updated successfully.`,
       })
-    } finally {
-      setIsSaving(false)
+
+      await fetchTemplates()
     }
-  }, [convertTreeToApiFormat, toast, currentFormIndex, allForms, fetchTemplates])
+  } catch (error) {
+   
+    toast({
+      title: "Save Failed",
+      description: error instanceof Error ? error.message : "There was an error saving your form.",
+      variant: "destructive",
+    })
+  } finally {
+    setIsSaving(false)
+  }
+}, [convertTreeToApiFormat, toast, currentFormIndex, allForms, fetchTemplates])
+
 
   const handleItemEdit = useCallback(
     (id: string) => {
@@ -758,7 +786,7 @@ const authToken = storedUser ? JSON.parse(storedUser).token : null;
       })
 
       const queryString = queryParams.toString()
-      const apiUrl = `http://15.206.69.231:8888/api/merchant/forms/${currentForm.id}/${action}${queryString ? "?" + queryString : ""}`
+      const apiUrl = `https://api.adpair.co/api/merchant/forms/${currentForm.id}/${action}${queryString ? "?" + queryString : ""}`
 
       const res = await fetch(apiUrl, {
         method: "POST",
