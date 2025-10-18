@@ -23,7 +23,6 @@ apiClient.interceptors.request.use(
       }
     } catch (error) {
       // If there's an error parsing user data, clear it
-      console.warn('Error parsing user data from localStorage:', error);
       localStorage.removeItem('user');
     }
     return config;
@@ -92,25 +91,12 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } else {
           // Refresh response indicates failure
-          console.error('Token refresh failed - invalid response:', refreshResponse.data);
           localStorage.removeItem('user');
           window.location.href = '/login';
           return Promise.reject(new Error('Token refresh failed'));
         }
         
       } catch (refreshError: any) {
-        console.error('Token refresh error:', refreshError);
-        
-        // Check if refresh token is invalid/expired
-        if (
-          refreshError.response &&
-          (refreshError.response.status === 401 || refreshError.response.status === 403)
-        ) {
-          console.error('Refresh token is invalid/expired, logging out.');
-        } else {
-          console.error('Network or other error during token refresh.');
-        }
-        
         // Clear user data and redirect to login
         localStorage.removeItem('user');
         window.location.href = '/login';
@@ -208,7 +194,6 @@ export const getMerchants = async (
     });
     return response.data.data; // This assumes your API response has a 'data' field containing the MerchantListData
   } catch (error) {
-    console.error("Failed to fetch merchants from API, returning dummy data:", error);
     throw error;
   }
 };
@@ -236,7 +221,6 @@ export const getMerchantDetails = async (merchantId: string): Promise<Merchant> 
     const response = await apiClient.get<GenericApiResponse<Merchant>>(`/admin/merchants/${merchantId}`);
     return response.data.data; // This assumes your API response has a 'data' field containing the Merchant object
   } catch (error) {
-    console.error("Failed to fetch merchant details from API, returning dummy data:", error);
     throw error;
   }
 };
@@ -266,6 +250,8 @@ export interface Plan {
   maxLeadsPerMonth: number;
   maxLocations: number;
   features: string; // Stored as stringified JSON
+  discountPercent?: number;
+  isActive?: boolean; // Added isActive field
   createdAt: string;
   updatedAt: string;
 }
@@ -295,17 +281,16 @@ export const createPlan = async (planData: any): Promise<PlanCreationResponse> =
     const response = await apiClient.post<PlanCreationResponse>('/plans', planData);
     return response.data;
   } catch (error) {
-    console.error("Failed to create plan:", error);
     throw error;
   }
 };
 
-export const getAllPlans = async (): Promise<Plan[]> => {
+export const getAllPlans = async (isActive?: boolean): Promise<Plan[]> => {
   try {
-    const response = await apiClient.get<AllPlansResponse>('/plans');
+    const url = isActive !== undefined ? `/plans/all?isActive=${isActive}` : '/plans/all';
+    const response = await apiClient.get<AllPlansResponse>(url);
     return response.data.data; // Assuming 'data' field contains an array of plans
   } catch (error) {
-    console.error("Failed to fetch all plans:", error);
     throw error;
   }
 };
@@ -315,23 +300,21 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
     const response = await apiClient.delete<GenericApiResponse<null>>(`/plans/${planId}`);
     return response.data;
   } catch (error) {
-    console.error("Failed to delete plan:", error);
     throw error;
   }
 };
 
 export const updatePlan = async (planId: string, planData: any): Promise<GenericApiResponse<Plan>> => {
   try {
-    // Send only discountPercent in the payload
+    // Send discountPercent and isActive in the payload
     const payload = {
-      discountPercent: planData.discountPercent ? Number(planData.discountPercent) : null
+      discountPercent: planData.discountPercent ? Number(planData.discountPercent) : null,
+      isActive: planData.isActive
     };
     
-    console.log("Sending payload to API:", payload);
     const response = await apiClient.put<GenericApiResponse<Plan>>(`/plans/${planId}`, payload);
     return response.data;
   } catch (error) {
-    console.error("Failed to update plan:", error);
     throw error;
   }
 };
@@ -344,7 +327,6 @@ export const updateMerchantPlan = async (merchantId: string, planId: string): Pr
     }
     return response.data.data; // Assuming data field contains the updated Merchant object
   } catch (error) {
-    console.error("Failed to update merchant plan:", error);
     throw error;
   }
 };
@@ -369,8 +351,6 @@ export const getMerchantSubscriptions = async (merchantId: string): Promise<Subs
     const response = await apiClient.get<MerchantSubscriptionsResponse>(`/admin/merchants/${merchantId}/subscriptions`);
     return response.data.data;
   } catch (error) {
-    console.error("Failed to fetch merchant subscriptions from API, returning dummy data:", error);
-    
     // Return dummy subscription data for testing
     const dummySubscriptions: Subscription[] = [
       {
@@ -403,7 +383,6 @@ export const assignMerchantPlan = async (merchantId: string, planId: string): Pr
     const response = await apiClient.post<Subscription>('/subscriptions', { merchantId, planId });
     return response.data;
   } catch (error) {
-    console.error("Failed to assign merchant plan:", error);
     throw error;
   }
 };
@@ -413,7 +392,6 @@ export const updateSubscriptionStatus = async (subscriptionId: string, status: '
     const response = await apiClient.put<Subscription>(`/subscriptions/${subscriptionId}/status`, { status });
     return response.data;
   } catch (error) {
-    console.error("Failed to update subscription status:", error);
     throw error;
   }
 };
@@ -423,7 +401,6 @@ export const forceActivateSubscription = async (subscriptionId: string, merchant
     const response = await apiClient.post<Subscription>('/subscriptions/force-activate', { merchantId, subscriptionId, notes });
     return response.data;
   } catch (error) {
-    console.error("Failed to force activate subscription:", error);
     throw error;
   }
 };

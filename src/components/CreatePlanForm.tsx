@@ -11,8 +11,9 @@ interface CreatePlanFormProps {
     maxLocations: string;
     discountPercent: string;
     features: string;
+    isActive?: boolean;
   };
-  handleInputChange: (field: string, value: string) => void;
+  handleInputChange: (field: string, value: string | boolean) => void;
   handleFeatureChange: (feature: string, value: boolean) => void;
   handleSubmit: (e: React.FormEvent) => void;
   isEditMode?: boolean;
@@ -82,111 +83,131 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
       <div className="mb-6 sm:mb-8">
         <h2 className="text-xl sm:text-2xl font-semibold mb-2">{isEditMode ? 'Edit Plan' : 'Plan Details'}</h2>
         <div className="text-gray-600 text-sm sm:text-base">
-          {isEditMode ? 'Edit the discount percentage of this plan' : 'Configure your new subscription plan'}
+          {isEditMode ? 'Edit the discount percentage and status of this plan' : 'Configure your new subscription plan'}
         </div>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Name *</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={e => handleInputChange('name', e.target.value)}
-            required
-            placeholder="e.g., Professional"
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          />
+      <div className="space-y-6">
+        {/* First Row: Name, Billing Cycle, Price - 3 fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Name *</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={e => handleInputChange('name', e.target.value)}
+              required
+              placeholder="e.g., Professional"
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Billing Cycle *</label>
+            <select
+              value={formData.billingCycle}
+              onChange={e => handleInputChange('billingCycle', e.target.value)}
+              required
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            >
+              <option value="">Select Billing Cycle</option>
+              <option value="MONTHLY">Monthly</option>
+              <option value="YEARLY">Yearly</option>
+              <option value="ADDON">Add-on</option>
+            </select>
+          </div>
+          
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Price *</label>
+            <input
+              type="number"
+              value={formData.price}
+              onChange={e => handleInputChange('price', e.target.value)}
+              required
+              placeholder="e.g., 99"
+              min="0"
+              step="0.01"
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            />
+          </div>
         </div>
         
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Price *</label>
-          <input
-            type="number"
-            value={formData.price}
-            onChange={e => handleInputChange('price', e.target.value)}
-            required
-            placeholder="e.g., 99"
-            min="0"
-            step="0.01"
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          />
+        {/* Second Row: Discount, Max Forms, Max Leads - 3 fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Discount Percentage</label>
+            <input
+              type="number"
+              value={formData.discountPercent}
+              onChange={e => handleInputChange('discountPercent', e.target.value)}
+              placeholder="e.g., 10"
+              min="0"
+              max="100"
+              className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Max Forms *</label>
+            <input
+              type="number"
+              value={formData.maxForms}
+              onChange={e => handleInputChange('maxForms', e.target.value)}
+              required
+              placeholder="e.g., 10"
+              min="0"
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            />
+          </div>
+          
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Max Leads *</label>
+            <input
+              type="number"
+              value={formData.maxLeadsPerMonth}
+              onChange={e => handleInputChange('maxLeadsPerMonth', e.target.value)}
+              required
+              placeholder="e.g., 1000"
+              min="0"
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            />
+          </div>
         </div>
         
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Billing Cycle *</label>
-          <select
-            value={formData.billingCycle}
-            onChange={e => handleInputChange('billingCycle', e.target.value)}
-            required
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          >
-            <option value="">Select Billing Cycle</option>
-            <option value="MONTHLY">Monthly</option>
-            <option value="YEARLY">Yearly</option>
-            <option value="ADDON">Add-on</option>
-          </select>
+        {/* Third Row: Max Locations, Features - 2 fields */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Max Locations *</label>
+            <input
+              type="number"
+              value={formData.maxLocations}
+              onChange={e => handleInputChange('maxLocations', e.target.value)}
+              required
+              placeholder="e.g., 5"
+              min="0"
+              className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+              disabled={isEditMode}
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block font-semibold text-sm sm:text-base">Features</label>
+            <div className={isEditMode ? 'opacity-70 pointer-events-none' : ''}>
+              <ShowFeaturesDropdown
+                selectedFeatures={JSON.parse(formData.features)}
+                onChange={featuresObj => handleInputChange('features', JSON.stringify(featuresObj))}
+              />
+            </div>
+          </div>
         </div>
         
+        {/* Fourth Row: Description - 1 field */}
         <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Discount Percentage</label>
-          <input
-            type="number"
-            value={formData.discountPercent}
-            onChange={e => handleInputChange('discountPercent', e.target.value)}
-            placeholder="e.g., 10"
-            min="0"
-            max="100"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Forms *</label>
-          <input
-            type="number"
-            value={formData.maxForms}
-            onChange={e => handleInputChange('maxForms', e.target.value)}
-            required
-            placeholder="e.g., 10"
-            min="0"
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Leads Per Month *</label>
-          <input
-            type="number"
-            value={formData.maxLeadsPerMonth}
-            onChange={e => handleInputChange('maxLeadsPerMonth', e.target.value)}
-            required
-            placeholder="e.g., 1000"
-            min="0"
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Locations *</label>
-          <input
-            type="number"
-            value={formData.maxLocations}
-            onChange={e => handleInputChange('maxLocations', e.target.value)}
-            required
-            placeholder="e.g., 5"
-            min="0"
-            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
-            disabled={isEditMode}
-          />
-        </div>
-        
-        <div className="lg:col-span-2 space-y-1">
           <label className="block font-semibold text-sm sm:text-base mb-2">Description</label>
           <textarea
             value={formData.description}
@@ -198,21 +219,34 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
           />
         </div>
         
-        <div className="lg:col-span-2 space-y-2">
-          <label className="block font-semibold text-sm sm:text-base">Features</label>
-          <div className={isEditMode ? 'opacity-70 pointer-events-none' : ''}>
-            <ShowFeaturesDropdown
-              selectedFeatures={JSON.parse(formData.features)}
-              onChange={featuresObj => handleInputChange('features', JSON.stringify(featuresObj))}
-            />
+        {/* Plan Status (only in edit mode) */}
+        {isEditMode && (
+          <div className="space-y-1">
+            <label className="block font-medium text-sm sm:text-base">Plan Status</label>
+            <div className="flex items-center space-x-2 mt-2">
+              <div className={`p-2 rounded-lg border ${formData.isActive ? 'bg-blue-100 border-blue-300' : 'bg-gray-100 border-gray-300'}`}>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="plan-status"
+                    checked={formData.isActive}
+                    onChange={e => handleInputChange('isActive', e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="plan-status" className="text-sm font-medium">
+                    {formData.isActive ? 'Active' : 'Inactive'}
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       
       <div className="flex justify-center sm:justify-end mt-6 sm:mt-8">
         <button 
           type="submit" 
-          className={`w-full sm:w-auto ${isEditMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold border-none rounded-lg px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+          className={`w-full sm:w-auto ${isEditMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold border-none rounded-[30px] px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
         >
           {isEditMode ? 'Save Changes' : 'Create New Plan'}
         </button>
@@ -302,6 +336,7 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              autoFocus
             />
           </div>
           <div className="max-h-48 overflow-y-auto p-2">

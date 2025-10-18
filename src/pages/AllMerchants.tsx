@@ -925,7 +925,7 @@ const AllMerchants: React.FC = () => {
                   <p className="text-sm font-semibold">{selectedPlanDetails.maxForms}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-muted-foreground">Max Leads/Month</label>
+                  <label className="text-sm font-medium text-muted-foreground">Max Leads</label>
                   <p className="text-sm font-semibold">{selectedPlanDetails.maxLeadsPerMonth}</p>
                 </div>
                 <div>
