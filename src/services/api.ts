@@ -320,6 +320,22 @@ export const deletePlan = async (planId: string): Promise<GenericApiResponse<nul
   }
 };
 
+export const updatePlan = async (planId: string, planData: any): Promise<GenericApiResponse<Plan>> => {
+  try {
+    // Send only discountPercent in the payload
+    const payload = {
+      discountPercent: planData.discountPercent ? Number(planData.discountPercent) : null
+    };
+    
+    console.log("Sending payload to API:", payload);
+    const response = await apiClient.put<GenericApiResponse<Plan>>(`/plans/${planId}`, payload);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update plan:", error);
+    throw error;
+  }
+};
+
 export const updateMerchantPlan = async (merchantId: string, planId: string): Promise<Merchant> => {
   try {
     const response = await apiClient.put<GenericApiResponse<Merchant>>(`/merchants/${merchantId}/assign-plan`, { planId });

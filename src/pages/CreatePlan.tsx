@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, X, Check, Trash, AlertCircle } from 'lucide-react';
 import CreatePlanForm from '@/components/CreatePlanForm';
-import { createPlan, getAllPlans, Plan, deletePlan } from '../services/api';
+import { createPlan, getAllPlans, Plan, deletePlan, updatePlan } from '../services/api';
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,8 @@ const CreatePlan: React.FC = () => {
   const [errorFetchingPlans, setErrorFetchingPlans] = useState<string | null>(null);
   const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false);
   const [planToDeleteId, setPlanToDeleteId] = useState<string | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingPlanId, setEditingPlanId] = useState<string | null>(null);
 
   // Fetch all plans
   const fetchAllPlans = async () => {
@@ -115,6 +117,41 @@ const CreatePlan: React.FC = () => {
     }
   };
 
+    // Handle Edit Plan Click
+  const handleEditPlanClick = (plan: Plan) => {
+    setIsEditMode(true);
+    setEditingPlanId(plan.id);
+    
+    // Parse features from string to object
+    let featuresObj = {};
+    try {
+      featuresObj = JSON.parse(plan.features || '{}');
+    } catch (error) {
+      console.error("Error parsing features:", error);
+    }
+    
+    // Set form data with plan values
+    setFormData({
+      name: plan.name,
+      description: plan.description || '',
+      price: plan.price.toString(),
+      billingCycle: plan.billingCycle,
+      maxForms: plan.maxForms.toString(),
+      maxLeadsPerMonth: plan.maxLeadsPerMonth.toString(),
+      maxLocations: plan.maxLocations.toString(),
+      discountPercent: plan.discountPercent ? plan.discountPercent.toString() : '',
+      features: JSON.stringify(featuresObj),
+    });
+    
+    // Scroll to form
+    const formElement = document.querySelector('.createplanform-wide');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -136,16 +173,29 @@ const CreatePlan: React.FC = () => {
       } catch (err) {
         featuresArr = [];
       }
+      
       const planData = { ...formData, features: JSON.stringify(featuresArr) };
-      const response = await createPlan(planData);
+      let response;
+      
+      if (isEditMode && editingPlanId) {
+        // Update existing plan
+        console.log("Updating plan with ID:", editingPlanId, "Data:", planData);
+        response = await updatePlan(editingPlanId, planData);
+        console.log("Update response:", response);
+      } else {
+        // Create new plan
+        response = await createPlan(planData);
+      }
 
       if (!response.success) {
-        throw new Error(response.message || response.error || 'Failed to create plan');
+        throw new Error(response.message || response.error || (isEditMode ? 'Failed to update plan' : 'Failed to create plan'));
       }
 
       toast({
-        title: "Plan Created Successfully! ",
-        description: `${formData.name} plan has been created and is now available`,
+        title: isEditMode ? "Plan Updated Successfully! 🎉" : "Plan Created Successfully! 🎉",
+        description: isEditMode 
+          ? `${formData.name} plan has been updated successfully`
+          : `${formData.name} plan has been created and is now available`,
         variant: "success",
       });
 
@@ -160,10 +210,12 @@ const CreatePlan: React.FC = () => {
         discountPercent: '',
         features: JSON.stringify({}),
       });
+      setIsEditMode(false);
+      setEditingPlanId(null);
       fetchAllPlans();
     } catch (error) {
       toast({
-        title: "Error creating plan",
+        title: isEditMode ? "Error updating plan" : "Error creating plan",
         description: error instanceof Error ? error.message : "An unexpected error occurred.",
         variant: "destructive",
       });
@@ -186,6 +238,7 @@ const CreatePlan: React.FC = () => {
             handleInputChange={handleInputChange}
             handleFeatureChange={handleFeatureChange}
             handleSubmit={handleSubmit}
+            isEditMode={isEditMode}
           />
         </div>
 
@@ -215,23 +268,45 @@ const CreatePlan: React.FC = () => {
                       <span className="font-bold text-primary text-sm sm:text-base">
                         ${plan.price}/{plan.billingCycle.toLowerCase()}
                       </span>
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              variant="destructive"
-                              size="icon"
-                              className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
-                              onClick={() => handleDeletePlanClick(plan.id)}
-                            >
-                              <Trash className="h-3 w-3 sm:h-4 sm:w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Delete Plan</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                      <div className="flex gap-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+                                onClick={() => handleEditPlanClick(plan)}
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3 sm:h-4 sm:w-4">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit Plan</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="icon"
+                                className="h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+                                onClick={() => handleDeletePlanClick(plan.id)}
+                              >
+                                <Trash className="h-3 w-3 sm:h-4 sm:w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Delete Plan</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
                     </div>
                   </div>
                   

@@ -1,10 +1,21 @@
 import React, { useState } from "react";
 
 interface CreatePlanFormProps {
-  formData: any;
-  handleInputChange: (field: string, value: string | boolean) => void;
-  handleFeatureChange: (featureName: string, checked: boolean) => void;
+  formData: {
+    name: string;
+    description: string;
+    price: string;
+    billingCycle: string;
+    maxForms: string;
+    maxLeadsPerMonth: string;
+    maxLocations: string;
+    discountPercent: string;
+    features: string;
+  };
+  handleInputChange: (field: string, value: string) => void;
+  handleFeatureChange: (feature: string, value: boolean) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  isEditMode?: boolean;
 }
 
 
@@ -64,12 +75,15 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
   handleInputChange,
   handleFeatureChange,
   handleSubmit,
+  isEditMode = false,
 }) => {
   return (
     <form onSubmit={handleSubmit} className="simple-form w-full max-w-6xl mx-auto bg-white rounded-xl p-4 sm:p-6 lg:p-8 shadow-sm border border-gray-200">
       <div className="mb-6 sm:mb-8">
-        <h2 className="text-xl sm:text-2xl font-semibold mb-2">Plan Details</h2>
-        <div className="text-gray-600 text-sm sm:text-base">Configure your new subscription plan</div>
+        <h2 className="text-xl sm:text-2xl font-semibold mb-2">{isEditMode ? 'Edit Plan' : 'Plan Details'}</h2>
+        <div className="text-gray-600 text-sm sm:text-base">
+          {isEditMode ? 'Edit the discount percentage of this plan' : 'Configure your new subscription plan'}
+        </div>
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -81,7 +95,8 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
             onChange={e => handleInputChange('name', e.target.value)}
             required
             placeholder="e.g., Professional"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
           />
         </div>
         
@@ -93,66 +108,81 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
             onChange={e => handleInputChange('price', e.target.value)}
             required
             placeholder="e.g., 99"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            min="0"
+            step="0.01"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
           />
         </div>
         
         <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Plan Type *</label>
+          <label className="block font-medium text-sm sm:text-base">Billing Cycle *</label>
           <select
             value={formData.billingCycle}
             onChange={e => handleInputChange('billingCycle', e.target.value)}
             required
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
           >
-            <option value="">Select plan type</option>
+            <option value="">Select Billing Cycle</option>
             <option value="MONTHLY">Monthly</option>
             <option value="YEARLY">Yearly</option>
-            <option value="ADDON">Addons</option>
+            <option value="ADDON">Add-on</option>
           </select>
         </div>
         
         <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Forms</label>
-          <input
-            type="number"
-            value={formData.maxForms}
-            onChange={e => handleInputChange('maxForms', e.target.value)}
-            placeholder="e.g., 10"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Leads</label>
-          <input
-            type="number"
-            value={formData.maxLeadsPerMonth}
-            onChange={e => handleInputChange('maxLeadsPerMonth', e.target.value)}
-            placeholder="e.g., 1000"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Max Locations</label>
-          <input
-            type="number"
-            value={formData.maxLocations}
-            onChange={e => handleInputChange('maxLocations', e.target.value)}
-            placeholder="e.g., 5"
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-          />
-        </div>
-        
-        <div className="space-y-1">
-          <label className="block font-medium text-sm sm:text-base">Discount Percent</label>
+          <label className="block font-medium text-sm sm:text-base">Discount Percentage</label>
           <input
             type="number"
             value={formData.discountPercent}
             onChange={e => handleInputChange('discountPercent', e.target.value)}
             placeholder="e.g., 10"
+            min="0"
+            max="100"
             className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <label className="block font-medium text-sm sm:text-base">Max Forms *</label>
+          <input
+            type="number"
+            value={formData.maxForms}
+            onChange={e => handleInputChange('maxForms', e.target.value)}
+            required
+            placeholder="e.g., 10"
+            min="0"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <label className="block font-medium text-sm sm:text-base">Max Leads Per Month *</label>
+          <input
+            type="number"
+            value={formData.maxLeadsPerMonth}
+            onChange={e => handleInputChange('maxLeadsPerMonth', e.target.value)}
+            required
+            placeholder="e.g., 1000"
+            min="0"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
+          />
+        </div>
+        
+        <div className="space-y-1">
+          <label className="block font-medium text-sm sm:text-base">Max Locations *</label>
+          <input
+            type="number"
+            value={formData.maxLocations}
+            onChange={e => handleInputChange('maxLocations', e.target.value)}
+            required
+            placeholder="e.g., 5"
+            min="0"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
           />
         </div>
         
@@ -163,25 +193,28 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
             onChange={e => handleInputChange('description', e.target.value)}
             placeholder="Describe this plan..."
             rows={3}
-            className="w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+            className={`w-full mt-1 p-2.5 sm:p-3 rounded-lg border border-gray-300 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none ${isEditMode ? 'bg-gray-100' : ''}`}
+            disabled={isEditMode}
           />
         </div>
         
         <div className="lg:col-span-2 space-y-2">
           <label className="block font-semibold text-sm sm:text-base">Features</label>
-          <ShowFeaturesDropdown
-            selectedFeatures={JSON.parse(formData.features)}
-            onChange={featuresObj => handleInputChange('features', JSON.stringify(featuresObj))}
-          />
+          <div className={isEditMode ? 'opacity-70 pointer-events-none' : ''}>
+            <ShowFeaturesDropdown
+              selectedFeatures={JSON.parse(formData.features)}
+              onChange={featuresObj => handleInputChange('features', JSON.stringify(featuresObj))}
+            />
+          </div>
         </div>
       </div>
       
       <div className="flex justify-center sm:justify-end mt-6 sm:mt-8">
         <button 
           type="submit" 
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold border-none rounded-lg px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          className={`w-full sm:w-auto ${isEditMode ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'} text-white font-semibold border-none rounded-lg px-6 sm:px-8 py-2.5 sm:py-3 text-sm sm:text-base cursor-pointer transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
         >
-          Create New Plan
+          {isEditMode ? 'Save Changes' : 'Create New Plan'}
         </button>
       </div>
     </form>

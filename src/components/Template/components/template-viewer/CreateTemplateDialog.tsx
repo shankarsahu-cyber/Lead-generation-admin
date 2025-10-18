@@ -205,10 +205,10 @@ export const CreateTemplateDialog = ({ onCreate }: CreateTemplateDialogProps) =>
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto">
+      <DialogContent className="max-w-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl">
         <DialogHeader>
-          <DialogTitle>Create New Template</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">Create New Template</DialogTitle>
+          <DialogDescription className="text-gray-600">
             Create a new template with default form structure. You can customize it later.
           </DialogDescription>
         </DialogHeader>

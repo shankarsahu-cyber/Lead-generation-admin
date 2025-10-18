@@ -173,10 +173,10 @@ export const EditTemplateDialog = ({ template, open, onOpenChange, onSave }: Edi
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto">
+      <DialogContent className="max-w-2xl w-full sm:max-w-md md:max-w-lg lg:max-w-2xl mx-auto bg-white/95 backdrop-blur-sm border border-gray-200 shadow-xl">
         <DialogHeader>
-          <DialogTitle>Edit Template</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl font-semibold bg-gradient-to-r from-green-600 to-teal-700 bg-clip-text text-transparent">Edit Template</DialogTitle>
+          <DialogDescription className="text-gray-600">
             Update the template details below. The form structure will remain unchanged.
           </DialogDescription>
         </DialogHeader>

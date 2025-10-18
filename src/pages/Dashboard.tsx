@@ -135,33 +135,8 @@ const Dashboard: React.FC = () => {
 
 
 
-  // Dummy follow-ups
-  const upcomingFollowUps = [
-    {
-      id: 1,
-      company: 'TechStart LLC',
-      contact: 'John Smith',
-      time: 'Today 2:00 PM',
-      type: 'Demo Call',
-      priority: 'high',
-    },
-    {
-      id: 2,
-      company: 'Growth Corp',
-      contact: 'Sarah Johnson',
-      time: 'Tomorrow 10:00 AM',
-      type: 'Proposal Review',
-      priority: 'medium',
-    },
-    {
-      id: 3,
-      company: 'Innovation Hub',
-      contact: 'Mike Wilson',
-      time: 'Tomorrow 3:30 PM',
-      type: 'Contract Discussion',
-      priority: 'high',
-    },
-  ];
+  // Empty follow-ups array
+  const upcomingFollowUps = [];
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
