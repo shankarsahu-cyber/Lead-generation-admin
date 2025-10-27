@@ -199,7 +199,7 @@ const CreatePlanForm: React.FC<CreatePlanFormProps> = ({
             <label className="block font-semibold text-sm sm:text-base">Features</label>
             <div className={isEditMode ? 'opacity-70 pointer-events-none' : ''}>
               <ShowFeaturesDropdown
-                selectedFeatures={JSON.parse(formData.features)}
+                selectedFeatures={typeof formData.features === 'string' ? JSON.parse(formData.features) : formData.features}
                 onChange={featuresObj => handleInputChange('features', JSON.stringify(featuresObj))}
               />
             </div>
@@ -262,6 +262,7 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const ref = useRef(null);
+  const [processedFeatures, setProcessedFeatures] = useState({});
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -288,20 +289,79 @@ const ShowFeaturesDropdown = ({ selectedFeatures, onChange }) => {
     { value: 'conversionTracking', label: 'Conversion Tracking' },
     { value: 'aiChatbots', label: 'AI Chatbots' },
   ];
-  const selectedLabels = Object.keys(selectedFeatures)
-    .filter(key => selectedFeatures[key])
+
+  // Process features on component mount and when selectedFeatures changes
+  useEffect(() => {
+    let features = {};
+    
+    // Handle string format (JSON)
+    if (typeof selectedFeatures === 'string') {
+      try {
+        features = JSON.parse(selectedFeatures);
+      } catch (e) {
+        features = {};
+      }
+    } 
+    // Handle array format (numeric indexes)
+    else if (Array.isArray(selectedFeatures)) {
+      FEATURES_LIST.forEach(feature => {
+        features[feature.value] = selectedFeatures.includes(feature.value);
+      });
+      
+      // Also handle numeric indexes if present
+      selectedFeatures.forEach(feature => {
+        if (typeof feature === 'number') {
+          const featureValue = FEATURES_LIST[feature]?.value;
+          if (featureValue) {
+            features[featureValue] = true;
+          }
+        }
+      });
+    } 
+    // Handle object format
+    else if (selectedFeatures && typeof selectedFeatures === 'object') {
+      features = {...selectedFeatures};
+    }
+    
+    setProcessedFeatures(features);
+    onChange(features);
+  }, [selectedFeatures]);
+
+  const selectedLabels = Object.keys(processedFeatures)
+    .filter(key => processedFeatures[key])
     .map(key => {
       const feature = FEATURES_LIST.find(f => f.value === key);
       return feature ? feature.label : key;
     });
 
   const handleToggle = (value) => {
-    onChange({ ...selectedFeatures, [value]: !selectedFeatures[value] });
+    const updatedFeatures = { ...processedFeatures, [value]: !processedFeatures[value] };
+    setProcessedFeatures(updatedFeatures);
+    onChange(updatedFeatures);
   };
 
   const filtered = FEATURES_LIST.filter(f => 
     f.label.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Initialize features object if it's a string (from JSON.parse)
+  useEffect(() => {
+    if (typeof selectedFeatures === 'string') {
+      try {
+        const parsedFeatures = JSON.parse(selectedFeatures);
+        onChange(parsedFeatures);
+      } catch (e) {
+        onChange({});
+      }
+    } else if (Array.isArray(selectedFeatures)) {
+      // Convert array of feature keys to object format
+      const featuresObj = {};
+      selectedFeatures.forEach(key => {
+        featuresObj[key] = true;
+      });
+      onChange(featuresObj);
+    }
+  }, []);
 
   return (
     <div ref={ref} className="relative w-full">

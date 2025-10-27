@@ -36,6 +36,7 @@ const CreatePlan: React.FC = () => {
     maxLocations: '',
     discountPercent: '',
     features: JSON.stringify({}),
+    isActive: true, 
   });
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState<boolean>(true);
@@ -227,6 +228,7 @@ const CreatePlan: React.FC = () => {
         maxLocations: '',
         discountPercent: '',
         features: JSON.stringify({}),
+        isActive: true, 
       });
       setIsEditMode(false);
       setEditingPlanId(null);
@@ -362,7 +364,11 @@ const CreatePlan: React.FC = () => {
                               <Check className="h-2 w-2 flex-shrink-0" /> 
                               <span className="truncate text-[10px]">{f.label}</span>
                             </div>
-                          ) : null;
+                          ) : (
+                            <div key={fKey} className="flex items-center gap-1 text-xs bg-amber-50 text-amber-700 px-1 py-0.5 rounded border border-amber-200">
+                              <span className="truncate text-[10px]">{fKey}</span>
+                            </div>
+                          );
                         });
                       })()}
                     </div>
